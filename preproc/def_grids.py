@@ -132,8 +132,8 @@ def generate_section_grid_oce(region='Amundsen',section=1):
                         -77.59225940, -77.54534302, -77.46934913, -77.41716667])
      depth=np.arange(0.,1175.,10.)
    elif ( region == 'Weddell' & section == 2 ): # Ronne
-     longitude=np.arange(-61.0,-46.7,0.1)
-     latitude=np.array([[-74.7388049, -74.7696137, -74.8004225, -74.8187727, -74.83695455,
+     longitude=np.arange(-61.0,-46.9,0.1)
+     latitude=np.array([ -74.7388049, -74.7696137, -74.8004225, -74.8187727, -74.83695455,
                          -74.8551363, -74.8733181, -74.8954805, -74.9250897, -74.95469898,
                          -74.9840514, -75.0018099, -75.0195684, -75.0373270, -75.05508554,
                          -75.0728440, -75.0906026, -75.1083611, -75.1261196, -75.14387818,
@@ -181,7 +181,11 @@ def generate_mooring_grid_oce(region='Amundsen',mooring=1):
 
       region: 'Amundsen' (default), 'Weddell'
 
-      mooring: 1 -> BSE-ISTAR (Pine Island) for Amundsen
+      mooring: 1 -> PIG-N for Amundsen
+               2 -> PIG-S for Amundsen
+               3 -> PIT-E for Amundsen
+               4 -> PIT-W for Amundsen
+
                1 -> AWI_252 for Weddell
                2 -> AWI_253 for Weddell
                3 -> AWI_254 for Weddell
@@ -189,22 +193,34 @@ def generate_mooring_grid_oce(region='Amundsen',mooring=1):
       exemple: [lon,lat,depth]=generate_mooring_grid_oce(region='Amundsen')
    """
 
-   if ( region == 'Amundsen' & mooring == 1 ): # PIG
-     longitude=np.array([ -102.15437 ])
-     latitude=np.array([ -75.05528 ])
-     depth=np.arange(300.,821.,1.)
+   if ( region == 'Amundsen' & mooring == 1 ): # PIG-N
+     longitude=np.array([ -102.0799 ])
+     latitude=np.array([ -74.8672 ])
+     depth=np.arange(200.,960.,10.)
+   elif ( region == 'Amundsen' & mooring == 2 ): # PIG-S
+     longitude=np.array([ -102.1524 ])
+     latitude=np.array([ -75.0589 ])
+     depth=np.arange(200.,960.,10.)
+   elif ( region == 'Amundsen' & mooring == 3 ): # PIT-E
+     longitude=np.array([ -102.5466 ])
+     latitude=np.array([ -71.3301 ])
+     depth=np.arange(200.,960.,10.)
+   elif ( region == 'Amundsen' & mooring == 4 ): # PIT-W
+     longitude=np.array([ -113.0464 ])
+     latitude=np.array([ -71.5621 ])
+     depth=np.arange(200.,960.,10.)
    elif ( region == 'Weddell' & mooring == 1 ): # AWI_252
      longitude=np.array([ -30.47025 ])
      latitude=np.array([ -76.09135 ])
-     depth=np.array([335.155716177651, 421.198718872697])
+     depth=np.array([335.2, 421.2])
    elif ( region == 'Weddell' & mooring == 2 ): # AWI_253
      longitude=np.array([ -30.99475 ])
      latitude=np.array([ -76.0459 ])
-     depth=np.array([348.910332481771, 433.794506934268])
+     depth=np.array([348.9, 433.8])
    elif ( region == 'Weddell' & mooring == 3 ): # AWI_254
      longitude=np.array([ -31.48375 ]) 
      latitude=np.array([ -75.9624 ]) 
-     depth=np.array([ 553.0090827338 ])
+     depth=np.array([ 553.0 ])
    else:
      sys.exit("~!@#$%^* error : region is not defined, choose either 'Amundsen' or 'Weddell'")
 
