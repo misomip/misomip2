@@ -130,7 +130,7 @@ def horizontal_interp( lat_in_1d, lon_in_1d, mlat_misomip, mlon_misomip, lat_out
      if skipna:
        lon_in_1d_nonan = lon_in_1d.where( (~np.isnan(var_in_1d)) & (~np.isinf(var_in_1d)), drop=True )
        lat_in_1d_nonan = lat_in_1d.where( (~np.isnan(var_in_1d)) & (~np.isinf(var_in_1d)), drop=True )
-       if ( weight.size == 0 ):
+       if ( np.size(weight) == 0 ):
          txxxx = interpolate.griddata( (lon_in_1d_nonan.values,lat_in_1d_nonan.values), var1d_nonan.values, (lon_out_1d,lat_out_1d), method='linear', fill_value=np.nan )
        else:
          wgt1d_nonan = weight.where( (~np.isnan(var_in_1d)) & (~np.isinf(var_in_1d)), drop=True )
@@ -142,7 +142,7 @@ def horizontal_interp( lat_in_1d, lon_in_1d, mlat_misomip, mlon_misomip, lat_out
          txxxx[ wgt < threshold ] = miss
        out = np.reshape( txxxx, (mlat_misomip, mlon_misomip) )
        if filnocvx:
-         if ( weight.size == 0 ):
+         if ( np.size(weight) == 0 ):
            # fill non-convex areas with nearest point (whatever its value):
            tssss = interpolate.griddata( (lon_in_1d_nonan.values,lat_in_1d_nonan.values), var1d_nonan, (lon_out_1d,lat_out_1d), method='nearest' )
          else:
@@ -159,7 +159,7 @@ def horizontal_interp( lat_in_1d, lon_in_1d, mlat_misomip, mlon_misomip, lat_out
        out[ out == miss ] = np.nan # points with weight below threshold
      else:
        if filnocvx:
-         if ( weight.size == 0 ):
+         if ( np.size(weight) == 0 ):
            txxxx = interpolate.griddata( (lon_in_1d.values,lat_in_1d.values), var_in_1d.values, (lon_out_1d,lat_out_1d), method='linear', fill_value=np.nan )
          else:
            prod=var_in_1d*weight
@@ -170,7 +170,7 @@ def horizontal_interp( lat_in_1d, lon_in_1d, mlat_misomip, mlon_misomip, lat_out
          out = np.reshape( txxxx, (mlat_misomip, mlon_misomip) )
          lon_in_1d_nonan = lon_in_1d.where( (~np.isnan(var_in_1d)) & (~np.isinf(var_in_1d)), drop=True )
          lat_in_1d_nonan = lat_in_1d.where( (~np.isnan(var_in_1d)) & (~np.isinf(var_in_1d)), drop=True ) 
-         if ( weight.size == 0 ):
+         if ( np.size(weight) == 0 ):
            # fill non-convex areas with nearest point:
            tssss = interpolate.griddata( (lon_in_1d_nonan.values,lat_in_1d_nonan.values), var1d_nonan.values, (lon_out_1d,lat_out_1d), method='nearest' )
          else:
