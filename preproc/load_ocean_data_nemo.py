@@ -146,9 +146,9 @@ def load_oce_mod_nemo(file_mesh_mask='mesh_mask.nc',\
    LEVOFV = maskV*100.0
 
    # 2d ice-shelf fractoin:
-   SFTFLI = ncM.misf*1.e0
-   SFTFLI = SFTFLI.where( (SFTFLI > 1.5), 0.e0 )
-   SFTFLI = SFTFLI.where( (SFTFLI < 1.5), 100. )
+   SFTFLF = ncM.misf*1.e0
+   SFTFLF = SFTFLF.where( (SFTFLF > 1.5), 0.e0 )
+   SFTFLF = SFTFLF.where( (SFTFLF < 1.5), 100. )
 
    # Bathymetry (including under ice shelves) [m]
    # (if possible after NEMO's initialization, i.e. from mesh_mask) :
@@ -168,12 +168,12 @@ def load_oce_mod_nemo(file_mesh_mask='mesh_mask.nc',\
   
    # Depth of ice shelf draft (if possible after NEMO's initialization, i.e. from mesh_mask) [m]:
    if ( "isfdraft" in ncM.data_vars ):
-     DEPFLI = ncM.isfdraft
+     DEPFLF = ncM.isfdraft
    elif ( "isfdraft" in ncB.data_vars ):
-     DEPFLI = ncB.isfdraft
+     DEPFLF = ncB.isfdraft
    else:
-     print('    WARNING :   No data found for DEPFLI  -->  filled with NaNs')
-     DEPFLI = xr.DataArray( np.zeros((my,mx))*np.nan, dims=['y', 'x'] )
+     print('    WARNING :   No data found for DEPFLF  -->  filled with NaNs')
+     DEPFLF = xr.DataArray( np.zeros((my,mx))*np.nan, dims=['y', 'x'] )
  
    # ocean temperature [degC]
    if ( "toce" in ncT.data_vars ):
@@ -311,30 +311,30 @@ def load_oce_mod_nemo(file_mesh_mask='mesh_mask.nc',\
 
    # ice shelf dynamical driving (heat exchange velocity) [m s-1]:
    if ( "isfgammat" in ncS.data_vars ):
-     DYDRFLI = ncS.isfgammat
+     DYDRFLF = ncS.isfgammat
    elif ( "sogammat_cav" in ncS.data_vars ):
-     DYDRFLI = ncS.sogammat_cav
+     DYDRFLF = ncS.sogammat_cav
    else:
-     print('    WARNING :   No data found for DYDRFLI  -->  filled with NaNs')
-     DYDRFLI = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'y', 'x'] ) 
+     print('    WARNING :   No data found for DYDRFLF  -->  filled with NaNs')
+     DYDRFLF = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'y', 'x'] ) 
 
    # ice shelf thermal driving [degC]:
    if ( "isfthermdr" in ncS.data_vars ):
-     THDRFLI = ncS.isfthermdr
+     THDRFLF = ncS.isfthermdr
    elif ( "thermald_cav" in ncS.data_vars ):
-     THDRFLI = ncS.thermald_cav
+     THDRFLF = ncS.thermald_cav
    else:
-     print('    WARNING :   No data found for THDRFLI  -->  filled with NaNs')
-     THDRFLI = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'y', 'x'] )
+     print('    WARNING :   No data found for THDRFLF  -->  filled with NaNs')
+     THDRFLF = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'y', 'x'] )
 
    # ice shelf haline driving [0.001]:
    if ( "isfhalindr" in ncS.data_vars ):
-     HADRFLI = ncS.isfhalindr
+     HADRFLF = ncS.isfhalindr
    elif ( "halined_cav" in ncS.data_vars ):
-     HADRFLI = ncS.halined_cav
+     HADRFLF = ncS.halined_cav
    else:
-     print('    WARNING :   No data found for HADRFLI  -->  filled with NaNs')
-     HADRFLI = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'y', 'x'] )
+     print('    WARNING :   No data found for HADRFLF  -->  filled with NaNs')
+     HADRFLF = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'y', 'x'] )
 
    # sea-ice concentration [0-100]
    if ( "siconc" in ncI.data_vars ):
@@ -473,9 +473,9 @@ def load_oce_mod_nemo(file_mesh_mask='mesh_mask.nc',\
        "TOB":       (["time", "sxy"], np.reshape( TOB.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "SOB":       (["time", "sxy"], np.reshape( SOB.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "FICESHELF": (["time", "sxy"], np.reshape( FICESHELF.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
-       "DYDRFLI":   (["time", "sxy"], np.reshape( DYDRFLI.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
-       "THDRFLI":   (["time", "sxy"], np.reshape( THDRFLI.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
-       "HADRFLI":   (["time", "sxy"], np.reshape( HADRFLI.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
+       "DYDRFLF":   (["time", "sxy"], np.reshape( DYDRFLF.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
+       "THDRFLF":   (["time", "sxy"], np.reshape( THDRFLF.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
+       "HADRFLF":   (["time", "sxy"], np.reshape( HADRFLF.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "MSFTBAROT": (["time", "sxy"], np.reshape( MSFTBAROT.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "HFDS":      (["time", "sxy"], np.reshape( HFDS.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "WFOATRLI":  (["time", "sxy"], np.reshape( WFOATRLI.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
@@ -487,8 +487,8 @@ def load_oce_mod_nemo(file_mesh_mask='mesh_mask.nc',\
        "LEVOFT":     (["z", "sxy"], np.reshape( LEVOFT.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, (mz,nxy)) ),
        "LEVOFU":     (["z", "sxy"], np.reshape( LEVOFU.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, (mz,nxy)) ),
        "LEVOFV":     (["z", "sxy"], np.reshape( LEVOFV.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, (mz,nxy)) ),
-       "SFTFLI":    (["sxy"], np.reshape( SFTFLI.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, nxy) ),
-       "DEPFLI":    (["sxy"], np.reshape( DEPFLI.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, nxy) ),
+       "SFTFLF":    (["sxy"], np.reshape( SFTFLF.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, nxy) ),
+       "DEPFLF":    (["sxy"], np.reshape( DEPFLF.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, nxy) ),
        "DEPTHO":    (["sxy"], np.reshape( DEPTHO.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, nxy) ),
        "DOMMSKT":   (["sxy"], np.reshape( DOMMSKT.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, nxy) ),
        "DOMMSKU":   (["sxy"], np.reshape( DOMMSKU.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, nxy) ),

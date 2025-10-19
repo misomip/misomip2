@@ -147,7 +147,7 @@ def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
    LEVOFV = ncM.hFacS*100.0
 
    # ice-shelf fraction:
-   SFTFLI = LEVOFT.max('Z').where( (LEVOFT.max('Z')>1.0) & (LEVOFT.isel(Z=0)<1.0), 0.0 )
+   SFTFLF = LEVOFT.max('Z').where( (LEVOFT.max('Z')>1.0) & (LEVOFT.isel(Z=0)<1.0), 0.0 )
 
    # Bathymetry (including under ice shelves) [m, positive]
    if ( "Depthxx" in ncM.data_vars ):
@@ -161,20 +161,20 @@ def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
 
    # Depth of ice shelf draft [m]:
    if ( "isfdraft" in ncM.data_vars ):
-     DEPFLI = ncM.isfdraft
+     DEPFLF = ncM.isfdraft
    elif ( "ice_draft" in ncM.data_vars ):
-     DEPFLI = ncM.ice_draft
+     DEPFLF = ncM.ice_draft
    elif ( "ice_shelf_draft" in ncM.data_vars ):
-     DEPFLI = ncM.ice_shelf_draft
+     DEPFLF = ncM.ice_shelf_draft
    elif ( "isfdraft" in ncT.data_vars ):
-     DEPFLI = ncT.isfdraft
+     DEPFLF = ncT.isfdraft
    elif ( "ice_draft" in ncT.data_vars ):
-     DEPFLI = ncT.ice_draft
+     DEPFLF = ncT.ice_draft
    elif ( "ice_shelf_draft" in ncT.data_vars ):
-     DEPFLI = ncT.ice_shelf_draft
+     DEPFLF = ncT.ice_shelf_draft
    else:
      dz = xr.DataArray( ncM.Zl.values-ncM.Zu.values, dims=['Z'] )
-     DEPFLI = DEPTHO - dz.dot(ncM.hFacC) 
+     DEPFLF = DEPTHO - dz.dot(ncM.hFacC) 
 
    # ocean temperature [degC]
    isTT=True
@@ -324,24 +324,24 @@ def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
 
    # ice shelf dynamical driving (heat exchange velocity) [m s-1]:
    if ( "SHIgammT" in ncT.data_vars ):
-     DYDRFLI = ncT.SHIgammT
+     DYDRFLF = ncT.SHIgammT
    else:
-     print('    WARNING :   No data found for DYDRFLI  -->  filled with NaNs')
-     DYDRFLI = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'YC', 'XC'] )
+     print('    WARNING :   No data found for DYDRFLF  -->  filled with NaNs')
+     DYDRFLF = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'YC', 'XC'] )
 
    # ice shelf thermal driving [degC]:
    if ( "SHIThDr" in ncT.data_vars ):
-     THDRFLI = ncT.SHIThDr
+     THDRFLF = ncT.SHIThDr
    else:
-     print('    WARNING :   No data found for THDRFLI  -->  filled with NaNs')
-     THDRFLI = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'YC', 'XC'] )
+     print('    WARNING :   No data found for THDRFLF  -->  filled with NaNs')
+     THDRFLF = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'YC', 'XC'] )
 
    # ice shelf haline driving [0.001]:
    if ( "SHIHaDR" in ncT.data_vars ):
-     HADRFLI = ncT.SHIHaDr
+     HADRFLF = ncT.SHIHaDr
    else:
-     print('    WARNING :   No data found for HADRFLI  -->  filled with NaNs')
-     HADRFLI = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'YC', 'XC'] )
+     print('    WARNING :   No data found for HADRFLF  -->  filled with NaNs')
+     HADRFLF = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'YC', 'XC'] )
 
    # sea-ice concentration [0-100]
    if ( "siconc" in ncI.data_vars ):
@@ -473,9 +473,9 @@ def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
        "TOB":       (["time", "sxy"], np.reshape( TOB.isel(XC=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "SOB":       (["time", "sxy"], np.reshape( SOB.isel(XC=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "FICESHELF": (["time", "sxy"], np.reshape( FICESHELF.isel(XC=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
-       "DYDRFLI":   (["time", "sxy"], np.reshape( DYDRFLI.isel(XC=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
-       "THDRFLI":   (["time", "sxy"], np.reshape( THDRFLI.isel(XC=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
-       "HADRFLI":   (["time", "sxy"], np.reshape( HADRFLI.isel(XC=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
+       "DYDRFLF":   (["time", "sxy"], np.reshape( DYDRFLF.isel(XC=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
+       "THDRFLF":   (["time", "sxy"], np.reshape( THDRFLF.isel(XC=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
+       "HADRFLF":   (["time", "sxy"], np.reshape( HADRFLF.isel(XC=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "MSFTBAROT": (["time", "sxy"], np.reshape( MSFTBAROT.isel(XC=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "HFDS":      (["time", "sxy"], np.reshape( HFDS.isel(XC=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "WFOATRLI":  (["time", "sxy"], np.reshape( WFOATRLI.isel(XC=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
@@ -487,8 +487,8 @@ def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
        "LEVOFT":    (["z", "sxy"], np.reshape( LEVOFT.isel(XC=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, (mz,nxy)) ),
        "LEVOFU":    (["z", "sxy"], np.reshape( LEVOFU.isel(XG=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, (mz,nxy)) ),
        "LEVOFV":    (["z", "sxy"], np.reshape( LEVOFV.isel(XC=slice(imin,imax+1),YG=slice(jmin,jmax+1)).values, (mz,nxy)) ),
-       "SFTFLI":    (["sxy"], np.reshape( SFTFLI.isel(XC=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, nxy) ),
-       "DEPFLI":    (["sxy"], np.reshape( DEPFLI.isel(XC=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, nxy) ),
+       "SFTFLF":    (["sxy"], np.reshape( SFTFLF.isel(XC=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, nxy) ),
+       "DEPFLF":    (["sxy"], np.reshape( DEPFLF.isel(XC=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, nxy) ),
        "DEPTHO":    (["sxy"], np.reshape( DEPTHO.isel(XC=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, nxy) ),
        "DOMMSKT":   (["sxy"], np.reshape( DOMMSKT.isel(XC=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, nxy) ),
        "DOMMSKU":   (["sxy"], np.reshape( DOMMSKU.isel(XG=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, nxy) ),

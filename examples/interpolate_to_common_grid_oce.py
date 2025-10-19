@@ -249,12 +249,12 @@ theU = mp.horizontal_interp( latU, lonU*aa, mlat, mlon, lat_miso1d, lon_miso1d*a
 theV = mp.horizontal_interp( latV, lonV*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.thetaV )
 
 # Ice shelf fraction on MISOMIP grid (in [0-100], =nan beyond model domain)
-SFTFLI_miso = mp.horizontal_interp( latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.SFTFLI )
-SFTFLI_miso[ np.isnan(DOMMSK_miso) ] = 0.e0 # will update to missval at the end of the calculation
+SFTFLF_miso = mp.horizontal_interp( latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.SFTFLF )
+SFTFLF_miso[ np.isnan(DOMMSK_miso) ] = 0.e0 # will update to missval at the end of the calculation
 
 # Depth of floating ice on MISOMIP grid (ice-shelf draft)
-DEPFLI_miso = mp.horizontal_interp( latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.DEPFLI, weight=oce.SFTFLI, skipna=True, filnocvx=filmis, threshold=epsfr )
-DEPFLI_miso[ np.isnan(DOMMSK_miso) | np.isnan(DEPFLI_miso) ] = 0.e0  # will be replaced with missval later on
+DEPFLF_miso = mp.horizontal_interp( latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.DEPFLF, weight=oce.SFTFLF, skipna=True, filnocvx=filmis, threshold=epsfr )
+DEPFLF_miso[ np.isnan(DOMMSK_miso) | np.isnan(DEPFLF_miso) ] = 0.e0  # will be replaced with missval later on
 
 # Ocean depth on MISOMIP grid (=nan where land or grounded ice or beyond model domain)
 DEPTHO_miso = mp.horizontal_interp( latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.DEPTHO, weight=seafracT, skipna=True, filnocvx=filmis, threshold=epsfr )
@@ -295,9 +295,9 @@ ZOS_miso    = np.zeros((mtime,mlat,mlon)) + missval
 TOB_miso    = np.zeros((mtime,mlat,mlon)) + missval
 SOB_miso    = np.zeros((mtime,mlat,mlon)) + missval
 FICESHELF_miso = np.zeros((mtime,mlat,mlon)) + missval
-DYDRFLI_miso = np.zeros((mtime,mlat,mlon)) + missval
-THDRFLI_miso = np.zeros((mtime,mlat,mlon)) + missval
-HADRFLI_miso = np.zeros((mtime,mlat,mlon)) + missval
+DYDRFLF_miso = np.zeros((mtime,mlat,mlon)) + missval
+THDRFLF_miso = np.zeros((mtime,mlat,mlon)) + missval
+HADRFLF_miso = np.zeros((mtime,mlat,mlon)) + missval
 MSFTBAROT_miso = np.zeros((mtime,mlat,mlon)) + missval
 HFDS_miso = np.zeros((mtime,mlat,mlon)) + missval
 WFOATRLI_miso = np.zeros((mtime,mlat,mlon)) + missval
@@ -376,24 +376,24 @@ for ll in np.arange(mtime):
   ## fileds interpolated from ice-shelf cells :
 
   tzz = mp.horizontal_interp( latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.FICESHELF.isel(time=ll), \
-                              weight=oce.SFTFLI, skipna=True, filnocvx=filmis, threshold=epsfr )
+                              weight=oce.SFTFLF, skipna=True, filnocvx=filmis, threshold=epsfr )
   tzz[ np.isnan(tzz) | domcond ] = missval
   FICESHELF_miso[ll,:,:] = tzz
 
-  tzz = mp.horizontal_interp( latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.DYDRFLI.isel(time=ll), \
-                              weight=oce.SFTFLI, skipna=True, filnocvx=filmis, threshold=epsfr ) 
+  tzz = mp.horizontal_interp( latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.DYDRFLF.isel(time=ll), \
+                              weight=oce.SFTFLF, skipna=True, filnocvx=filmis, threshold=epsfr ) 
   tzz[ np.isnan(tzz) | domcond ] = missval
-  DYDRFLI_miso[ll,:,:] = tzz
+  DYDRFLF_miso[ll,:,:] = tzz
 
-  tzz = mp.horizontal_interp( latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.THDRFLI.isel(time=ll), \
-                              weight=oce.SFTFLI, skipna=True, filnocvx=filmis, threshold=epsfr ) 
+  tzz = mp.horizontal_interp( latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.THDRFLF.isel(time=ll), \
+                              weight=oce.SFTFLF, skipna=True, filnocvx=filmis, threshold=epsfr ) 
   tzz[ np.isnan(tzz) | domcond ] = missval
-  THDRFLI_miso[ll,:,:] = tzz
+  THDRFLF_miso[ll,:,:] = tzz
 
-  tzz = mp.horizontal_interp( latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.HADRFLI.isel(time=ll), \
-                              weight=oce.SFTFLI, skipna=True, filnocvx=filmis, threshold=epsfr ) 
+  tzz = mp.horizontal_interp( latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.HADRFLF.isel(time=ll), \
+                              weight=oce.SFTFLF, skipna=True, filnocvx=filmis, threshold=epsfr ) 
   tzz[ np.isnan(tzz) | domcond ] = missval
-  HADRFLI_miso[ll,:,:] = tzz
+  HADRFLF_miso[ll,:,:] = tzz
 
   ## fileds interpolated from sea-ice cells :
 
@@ -435,9 +435,9 @@ for ll in np.arange(mtime):
 
 
 LEVOF_miso[ np.isnan(LEVOF_miso) ] = missval
-SFTFLI_miso[ np.isnan(SFTFLI_miso) | np.isnan(DOMMSK_miso) ] = missval 
+SFTFLF_miso[ np.isnan(SFTFLF_miso) | np.isnan(DOMMSK_miso) ] = missval 
 SICONC_miso[ np.isnan(SICONC_miso) ] = missval
-DEPFLI_miso[ (DEPFLI_miso==0.e0) | np.isnan(DOMMSK_miso) ] = missval
+DEPFLF_miso[ (DEPFLF_miso==0.e0) | np.isnan(DOMMSK_miso) ] = missval
 DEPTHO_miso[ np.isnan(DOMMSK_miso) | (DEPTHO_miso==0.) ] = missval
 
 #--------------------------------------------------------------------------
@@ -455,9 +455,9 @@ dsmiso3d = xr.Dataset(
     "tob":       (["time", "latitude", "longitude"], np.float32(TOB_miso)),
     "sob":       (["time", "latitude", "longitude"], np.float32(SOB_miso)),
     "ficeshelf": (["time", "latitude", "longitude"], np.float32(FICESHELF_miso)),
-    "dydrfli":   (["time", "latitude", "longitude"], np.float32(DYDRFLI_miso)),
-    "thdrfli":   (["time", "latitude", "longitude"], np.float32(THDRFLI_miso)),
-    "hadrfli":   (["time", "latitude", "longitude"], np.float32(HADRFLI_miso)),
+    "dydrflf":   (["time", "latitude", "longitude"], np.float32(DYDRFLF_miso)),
+    "thdrflf":   (["time", "latitude", "longitude"], np.float32(THDRFLF_miso)),
+    "hadrflf":   (["time", "latitude", "longitude"], np.float32(HADRFLF_miso)),
     "msftbarot": (["time", "latitude", "longitude"], np.float32(MSFTBAROT_miso)),
     "hfds":      (["time", "latitude", "longitude"], np.float32(HFDS_miso)),
     "wfoatrli":  (["time", "latitude", "longitude"], np.float32(WFOATRLI_miso)),
@@ -467,8 +467,8 @@ dsmiso3d = xr.Dataset(
     "siu":       (["time", "latitude", "longitude"], np.float32(SIU_miso)),
     "siv":       (["time", "latitude", "longitude"], np.float32(SIV_miso)),
     "levof":     (["depth", "latitude", "longitude"], np.float32(LEVOF_miso)),
-    "sftfli":    (["latitude", "longitude"], np.float32(SFTFLI_miso)),
-    "depfli":    (["latitude", "longitude"], np.float32(DEPFLI_miso)),
+    "sftflf":    (["latitude", "longitude"], np.float32(SFTFLF_miso)),
+    "depflf":    (["latitude", "longitude"], np.float32(DEPFLF_miso)),
     "deptho":    (["latitude", "longitude"], np.float32(DEPTHO_miso)),
     },
     coords={
@@ -491,7 +491,7 @@ print('Creating ',file_miso3d)
 dsmiso3d.to_netcdf(file_miso3d,unlimited_dims="time")
 
 del dsmiso3d
-del SO_miso, THETAO_miso, UO_miso, VO_miso, ZOS_miso, FICESHELF_miso, DYDRFLI_miso, THDRFLI_miso, HADRFLI_miso, MSFTBAROT_miso
+del SO_miso, THETAO_miso, UO_miso, VO_miso, ZOS_miso, FICESHELF_miso, DYDRFLF_miso, THDRFLF_miso, HADRFLF_miso, MSFTBAROT_miso
 del HFDS_miso, WFOATRLI_miso, WFOSICOR_miso, SICONC_miso, SIVOL_miso, SIU_miso, SIV_miso
 
 print('  Execution time: ',datetime.now() - startTime)
@@ -530,10 +530,10 @@ DOMMSK_sect = np.squeeze(mp.horizontal_interp( latT, lonT*aa, mlonlatsec, 1, lat
 domcond = ( np.isnan(DOMMSK_sect) )
 
 # Depth of floating ice on MISOMIP grid (ice-shelf draft)
-DEPFLI_sect = np.squeeze( mp.horizontal_interp( latT, lonT*aa, mlonlatsec, 1, lat_sect1d, lon_sect1d*aa, oce.DEPFLI.where(cond_secT,drop=True), \
-                                                weight=oce.SFTFLI.where(cond_secT,drop=True), \
+DEPFLF_sect = np.squeeze( mp.horizontal_interp( latT, lonT*aa, mlonlatsec, 1, lat_sect1d, lon_sect1d*aa, oce.DEPFLF.where(cond_secT,drop=True), \
+                                                weight=oce.SFTFLF.where(cond_secT,drop=True), \
                                                 skipna=True, filnocvx=filmis, threshold=epsfr ) )
-DEPFLI_sect[ domcond | np.isnan(DEPFLI_sect) ] = 0.e0 # will be replaced with missval later on
+DEPFLF_sect[ domcond | np.isnan(DEPFLF_sect) ] = 0.e0 # will be replaced with missval later on
 
 # Ocean depth on MISOMIP grid (=nan where land or grounded ice or beyond model domain)
 DEPTHO_sect = np.squeeze( mp.horizontal_interp( latT, lonT*aa, mlonlatsec, 1, lat_sect1d, lon_sect1d*aa, oce.DEPTHO.where(cond_secT,drop=True), \
@@ -572,7 +572,7 @@ for ll in np.arange(mtime):
     tzz[ condkk | (np.isnan(tzz)) ] = missval
     THETAO_sect[ll,kk,:] = tzz
 
-DEPFLI_sect[ DEPFLI_sect==0.e0 ] = missval
+DEPFLF_sect[ DEPFLF_sect==0.e0 ] = missval
 DEPTHO_sect[ np.isnan(DOMMSK_sect) | (DEPTHO_sect==0.) ] = missval
 
 #--------------------------------------------------------------------------
@@ -651,8 +651,8 @@ indxy = ((lat_moor0d-latT.where(openseafracT >= 50.))**2+((lon_moor0d-lonT.where
 print('Closest point of open sea near mooring of (lon,lat) = ',lon_moor0d,lat_moor0d)
 print('   is at model point of (lon,lat) = ',lonT.where(openseafracT >= 50.).isel(sxy=indxy).values, latT.where(openseafracT >= 50.).isel(sxy=indxy).values )
 DOMMSK_moor = oce.DOMMSKT.where(cond_mooT,drop=True).where(openseafracT >= 50.).isel(sxy=indxy).values
-DEPFLI_moor = oce.DEPFLI.where(cond_mooT,drop=True).where(openseafracT >= 50.).isel(sxy=indxy).values
-DEPFLI_moor[ np.isnan(DOMMSK_moor) ] = missval
+DEPFLF_moor = oce.DEPFLF.where(cond_mooT,drop=True).where(openseafracT >= 50.).isel(sxy=indxy).values
+DEPFLF_moor[ np.isnan(DOMMSK_moor) ] = missval
 DEPTHO_moor = oce.DEPTHO.where(cond_mooT,drop=True).where(openseafracT >= 50.).isel(sxy=indxy).values
 DEPTHO_moor[ np.isnan(DOMMSK_moor) ] = missval
 

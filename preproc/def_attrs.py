@@ -97,8 +97,8 @@ def add_standard_attributes_oce(ds,miss=9.969209968386869e36,verbose=False):
      ds.depflf.attrs['_FillValue'] = miss
      ds.depflf.attrs['units'] = 'm'
      ds.depflf.attrs['long_name'] = 'Depth of Floating Ice Base Below Geoid' 
-     ds.depfli.attrs['standard_name'] = 'TBD'
-     ds.depfli.attrs['cell_method'] = 'area: mean where ice shelf'
+     ds.depflf.attrs['standard_name'] = 'TBD'
+     ds.depflf.attrs['cell_method'] = 'area: mean where ice shelf'
 
   if ( "thetao" in ds.data_vars ):
      if verbose: print('define attributes for variable thetao')

@@ -121,7 +121,7 @@ def load_oce_mod_roms(files_T='ROMS_all.nc',\
    DOMMSKV = xr.DataArray( halonan, dims=['eta_v', 'xi_v'] )
 
    # ice-shelf fraction [0-100]:
-   SFTFLI = ncM.mask_rho.where( ncM.zice<-1., 0.0 )*100.
+   SFTFLF = ncM.mask_rho.where( ncM.zice<-1., 0.0 )*100.
 
    # Bathymetry (including under ice shelves) [m, positive]
    if ( "h" in ncM.data_vars ):
@@ -132,11 +132,11 @@ def load_oce_mod_roms(files_T='ROMS_all.nc',\
  
    # Depth of ice shelf draft [m, positive]:
    if ( "zice" in ncM.data_vars ):
-     DEPFLI = ncM.zice*(-1)
-     DEPFLI = DEPFLI.where( ncM.mask_rho > 0.5, 0.e0)
+     DEPFLF = ncM.zice*(-1)
+     DEPFLF = DEPFLF.where( ncM.mask_rho > 0.5, 0.e0)
    else:
-     print('    WARNING :   No data found for DEPFLI  -->  filled with NaNs')
-     DEPFLI = xr.DataArray( np.zeros((my,mx))*np.nan, dims=['eta_rho', 'xi_rho'] )
+     print('    WARNING :   No data found for DEPFLF  -->  filled with NaNs')
+     DEPFLF = xr.DataArray( np.zeros((my,mx))*np.nan, dims=['eta_rho', 'xi_rho'] )
  
    # ocean temperature [degC]
    if ( "temp" in ncT.data_vars ):
@@ -250,24 +250,24 @@ def load_oce_mod_roms(files_T='ROMS_all.nc',\
 
    # ice shelf dynamical driving (heat exchange velocity) [m s-1]:
    if ( "isfgammat" in ncT.data_vars ):
-     DYDRFLI = ncT.isfgammat
+     DYDRFLF = ncT.isfgammat
    else:
-     print('    WARNING :   No data found for DYDRFLI  -->  filled with NaNs')
-     DYDRFLI = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'eta_rho', 'xi_rho'] )
+     print('    WARNING :   No data found for DYDRFLF  -->  filled with NaNs')
+     DYDRFLF = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'eta_rho', 'xi_rho'] )
 
    # ice shelf thermal driving [degC]:
    if ( "isfthermdr" in ncT.data_vars ):
-     THDRFLI = ncT.isfthermdr
+     THDRFLF = ncT.isfthermdr
    else:
-     print('    WARNING :   No data found for THDRFLI  -->  filled with NaNs')
-     THDRFLI = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'eta_rho', 'xi_rho'] )
+     print('    WARNING :   No data found for THDRFLF  -->  filled with NaNs')
+     THDRFLF = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'eta_rho', 'xi_rho'] )
 
    # ice shelf haline driving [0.001]:
    if ( "isfhalindr" in ncT.data_vars ):
-     HADRFLI = ncT.isfhalindr
+     HADRFLF = ncT.isfhalindr
    else:
-     print('    WARNING :   No data found for HADRFLI  -->  filled with NaNs')
-     HADRFLI = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'eta_rho', 'xi_rho'] )
+     print('    WARNING :   No data found for HADRFLF  -->  filled with NaNs')
+     HADRFLF = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'eta_rho', 'xi_rho'] )
 
    # sea-ice concentration [0-100]
    if ( "siconc" in ncI.data_vars ):
@@ -390,20 +390,20 @@ def load_oce_mod_roms(files_T='ROMS_all.nc',\
    # sea fraction in Z space:
    DepTUV = xr.DataArray( newdepth, dims=['z'], coords=dict( z=(['z'], newdepth) ) )
    DEPTHOT = DEPTHO.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1))
-   DEPFLIT = DEPFLI.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1))
+   DEPFLFT = DEPFLF.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1))
    DEPTHOU = xr.DataArray( 0.5 * (DEPTHOT.values+DEPTHOT.shift(xi_rho=1).values), dims=['eta_u', 'xi_u'] )
-   DEPFLIU = xr.DataArray( 0.5 * (DEPFLIT.values+DEPFLIT.shift(xi_rho=1).values), dims=['eta_u', 'xi_u'] )
+   DEPFLFU = xr.DataArray( 0.5 * (DEPFLFT.values+DEPFLFT.shift(xi_rho=1).values), dims=['eta_u', 'xi_u'] )
    DEPTHOV = xr.DataArray( 0.5 * (DEPTHOT.values+DEPTHOT.shift(eta_rho=1).values), dims=['eta_v', 'xi_v'] )
-   DEPFLIV = xr.DataArray( 0.5 * (DEPFLIT.values+DEPFLIT.shift(eta_rho=1).values), dims=['eta_v', 'xi_v'] )
+   DEPFLFV = xr.DataArray( 0.5 * (DEPFLFT.values+DEPFLFT.shift(eta_rho=1).values), dims=['eta_v', 'xi_v'] )
 
    LEVOFT = xr.DataArray( np.ones((mz,np.shape(ztmp)[1],np.shape(ztmp)[2]))*100., dims=['z', 'eta_rho', 'xi_rho'], coords=dict( z=(['z'], newdepth) ) )
-   LEVOFT = LEVOFT.where( ( (DepTUV==0.) & (DEPFLIT==0.) ) | ( (DEPTHOT>DepTUV) & (DEPFLIT<DepTUV) ), 0.e0 ) \
+   LEVOFT = LEVOFT.where( ( (DepTUV==0.) & (DEPFLFT==0.) ) | ( (DEPTHOT>DepTUV) & (DEPFLFT<DepTUV) ), 0.e0 ) \
             * ncM.mask_rho.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1))
    LEVOFU = xr.DataArray( np.ones((mz,np.shape(ztmp)[1],np.shape(ztmp)[2]))*100., dims=['z', 'eta_u', 'xi_u'], coords=dict( z=(['z'], newdepth) ) )
-   LEVOFU = LEVOFU.where( ( (DepTUV==0.) & (DEPFLIU==0.) ) | ( (DEPTHOU>DepTUV) & (DEPFLIU<DepTUV) ), 0.e0 ) \
+   LEVOFU = LEVOFU.where( ( (DepTUV==0.) & (DEPFLFU==0.) ) | ( (DEPTHOU>DepTUV) & (DEPFLFU<DepTUV) ), 0.e0 ) \
             * ncM.mask_u.isel(xi_u=slice(imin,imax+1),eta_u=slice(jmin,jmax+1))
    LEVOFV = xr.DataArray( np.ones((mz,np.shape(ztmp)[1],np.shape(ztmp)[2]))*100., dims=['z', 'eta_v', 'xi_v'], coords=dict( z=(['z'], newdepth) ) )
-   LEVOFV = LEVOFV.where( ( (DepTUV==0.) & (DEPFLIV==0.) ) | ( (DEPTHOV>DepTUV) & (DEPFLIV<DepTUV) ), 0.e0 ) \
+   LEVOFV = LEVOFV.where( ( (DepTUV==0.) & (DEPFLFV==0.) ) | ( (DEPTHOV>DepTUV) & (DEPFLFV<DepTUV) ), 0.e0 ) \
             * ncM.mask_v.isel(xi_v=slice(imin,imax+1),eta_v=slice(jmin,jmax+1))
 
    ZMODT = xr.DataArray( ztmp, dims=['s_rho', 'eta_rho', 'xi_rho'] )
@@ -494,9 +494,9 @@ def load_oce_mod_roms(files_T='ROMS_all.nc',\
        "TOB":       (["time", "sxy"], np.reshape( TOB.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "SOB":       (["time", "sxy"], np.reshape( SOB.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "FICESHELF": (["time", "sxy"], np.reshape( FICESHELF.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
-       "DYDRFLI":   (["time", "sxy"], np.reshape( DYDRFLI.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
-       "THDRFLI":   (["time", "sxy"], np.reshape( THDRFLI.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
-       "HADRFLI":   (["time", "sxy"], np.reshape( HADRFLI.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
+       "DYDRFLF":   (["time", "sxy"], np.reshape( DYDRFLF.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
+       "THDRFLF":   (["time", "sxy"], np.reshape( THDRFLF.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
+       "HADRFLF":   (["time", "sxy"], np.reshape( HADRFLF.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "MSFTBAROT": (["time", "sxy"], np.reshape( MSFTBAROT.isel(xi_u=slice(imin,imax+1),eta_u=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "HFDS":      (["time", "sxy"], np.reshape( HFDS.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "WFOATRLI":  (["time", "sxy"], np.reshape( WFOATRLI.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
@@ -508,8 +508,8 @@ def load_oce_mod_roms(files_T='ROMS_all.nc',\
        "LEVOFT":    (["z", "sxy"], np.reshape( LEVOFT.values, (mz,nxy)) ),
        "LEVOFU":    (["z", "sxy"], np.reshape( LEVOFU.values, (mz,nxy)) ),
        "LEVOFV":    (["z", "sxy"], np.reshape( LEVOFV.values, (mz,nxy)) ),
-       "SFTFLI":    (["sxy"], np.reshape( SFTFLI.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, nxy) ),
-       "DEPFLI":    (["sxy"], np.reshape( DEPFLI.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, nxy) ),
+       "SFTFLF":    (["sxy"], np.reshape( SFTFLF.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, nxy) ),
+       "DEPFLF":    (["sxy"], np.reshape( DEPFLF.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, nxy) ),
        "DEPTHO":    (["sxy"], np.reshape( DEPTHO.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, nxy) ),
        "DOMMSKT":   (["sxy"], np.reshape( DOMMSKT.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, nxy) ),
        "DOMMSKU":   (["sxy"], np.reshape( DOMMSKU.isel(xi_u=slice(imin,imax+1),eta_u=slice(jmin,jmax+1)).values, nxy) ),
