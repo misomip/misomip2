@@ -107,7 +107,6 @@ def add_standard_attributes_oce(ds,miss=9.969209968386869e36,verbose=False):
      ds.thetao.attrs['long_name'] = 'Sea Water Potential Temperature'
      ds.thetao.attrs['standard_name'] = 'sea_water_potential_temperature'
      ds.thetao.attrs['cell_method'] = 'volume: mean where ocean; time: monthly mean'
-     ds.thetao.attrs['comment'] = 'This is the quantity that approximates the practical salinity traditionally obtained through conductivity measurements (see appendix D of Griffies et al. (2016)'
 
   if ( "so" in ds.data_vars ):
      if verbose: print('define attributes for variable so')
@@ -116,6 +115,7 @@ def add_standard_attributes_oce(ds,miss=9.969209968386869e36,verbose=False):
      ds.so.attrs['long_name'] = 'Sea Water Salinity (practical salinity)'
      ds.so.attrs['standard_name'] = 'sea_water_salinity' 
      ds.so.attrs['cell_method'] = 'volume: mean where ocean; time: monthly mean'
+     ds.so.attrs['comment'] = 'This is the quantity that approximates the practical salinity traditionally obtained through conductivity measurements (see appendix D of Griffies et al. (2016)'
 
   if ( "tob" in ds.data_vars ):
      if verbose: print('define attributes for variable tob')
