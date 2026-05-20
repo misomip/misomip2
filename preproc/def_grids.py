@@ -66,7 +66,7 @@ def generate_section_grid_oce(region='Amundsen',section=1):
       exemple: [lon,lat,depth]=generate_section_grid_oce(region='Amundsen')
    """
 
-   if ( region == 'Amundsen' & section == 1 ): # Pine Island Trough
+   if ( region == 'Amundsen' ) & ( section == 1 ): # Pine Island Trough
      longitude=np.array([  -97.643,  -97.994,  -98.344,  -98.694,  -99.045,  -99.395,  -99.746, -100.096,
                           -100.446, -100.797, -101.147, -101.497, -101.847, -102.056, -102.264, -102.473,
                           -102.681, -102.890, -103.098, -103.306, -103.515, -103.723, -103.932, -104.069,
@@ -90,7 +90,7 @@ def generate_section_grid_oce(region='Amundsen',section=1):
                           -102.024, -102.033, -102.042, -102.051, -102.060 ])
      latitude=np.arange(-75.5+1./30.,-70.0+1./30.,1./30.) 
      depth=np.arange(0.,1990.,5.)
-   elif ( region == 'Amundsen' & section == 2 ): # Dotson Trough
+   elif ( region == 'Amundsen' ) & ( section == 2 ): # Dotson Trough
      longitude=np.array([ -114.313, -114.127, -113.940, -113.753, -113.567, -113.380, -113.193, -113.058,
                           -112.975, -112.892, -112.808, -112.725, -112.642, -112.575, -112.525, -112.475,
                           -112.425, -112.375, -112.325, -112.318, -112.353, -112.389, -112.424, -112.460,
@@ -105,7 +105,7 @@ def generate_section_grid_oce(region='Amundsen',section=1):
                           -118.227, -118.282, -118.338, -118.393, -118.448 ])
      latitude=np.arange(-75.05+1./30.,-71.95+1./30.,1./30.)
      depth=np.arange(0.,1505.,5.)   
-   elif ( region == 'Weddell' & section == 1 ): # SR04
+   elif ( region == 'Weddell' ) & ( section == 1 ): # SR04
      longitude=np.arange(-55,-9.9,0.1)
      latitude=np.array([-62.92608857142859 ,  -62.94654571428573 ,  -62.96700285714287 ,  -62.98746000000001 ,  -63.00791714285716 ,
                         -63.02837428571430 ,  -63.04883142857144 ,  -63.06928857142859 ,  -63.08974571428572 ,  -63.11020285714286 ,
@@ -199,11 +199,11 @@ def generate_section_grid_oce(region='Amundsen',section=1):
                         -71.26249237240616 ,  -71.27931794727998 ,  -71.29614352215378 ,  -71.31296909702759 ,  -71.32979467190140 ,
                         -71.34662025000000 ])
      depth=np.arange(0.,4885.,5.)
-   elif ( region == 'Weddell' & section == 2 ): # section 76°S
+   elif ( region == 'Weddell' ) & ( section == 2 ): # section 76°S
      longitude=np.arange(-32.7,-28.9,0.1)
      latitude=np.zeros_like(longitude)-76.00000000
      depth=np.arange(0.,755.,5.)
-   elif ( region == 'Weddell' & section == 3 ): # Filchner
+   elif ( region == 'Weddell' ) & ( section == 3 ): # Filchner
      longitude=np.arange(-46.3,-34.2,0.1)
      latitude=np.array([-77.18953189165573 ,  -77.17092114460462 ,  -77.15231039755350 ,  -77.13369965050240 ,  -77.11508890345128 ,
                         -77.09647815640017 ,  -77.07786740934905 ,  -77.05925666229794 ,  -77.04064591524683 ,  -77.02203516819573 ,
@@ -231,7 +231,7 @@ def generate_section_grid_oce(region='Amundsen',section=1):
                         -77.62946757457844 ,  -77.61086348897533 ,  -77.59225940337221 ,  -77.54534301732912 ,  -77.46934913353708 ,
                         -77.39335525000000 ])
      depth=np.arange(0.,1175.,10.)
-   elif ( region == 'Weddell' & section == 4 ): # Ronne
+   elif ( region == 'Weddell' ) & ( section == 4 ): # Ronne
      longitude=np.arange(-61.0,-46.9,0.1)
      latitude=np.array([ -74.73880490196078 ,  -74.76961372549019 ,  -74.80042254901960 ,  -74.81877272727273 ,  -74.83695454545455 ,
                          -74.85513636363636 ,  -74.87331818181818 ,  -74.89548054442218 ,  -74.92508976285906 ,  -74.95469898129592 ,
@@ -289,62 +289,62 @@ def generate_mooring_grid_oce(region='Amundsen',mooring=1):
       exemple: [lon,lat,depth]=generate_mooring_grid_oce(region='Amundsen')
    """
 
-   if ( region == 'Amundsen' & mooring == 1 ): # PIG-N
+   if ( region == 'Amundsen' ) & ( mooring == 1 ): # PIG-N
      longitude=np.array([ -102.0799 ])
      latitude=np.array([ -74.8672 ])
      depth=np.arange(0.,1160.,10.)
-   elif ( region == 'Amundsen' & mooring == 2 ): # PIG-S
+   elif ( region == 'Amundsen' ) & ( mooring == 2 ): # PIG-S
      longitude=np.array([ -102.1524 ])
      latitude=np.array([ -75.0589 ])
      depth=np.arange(0.,1160.,10.)
-   elif ( region == 'Amundsen' & mooring == 3 ): # PIT-E
+   elif ( region == 'Amundsen' ) & ( mooring == 3 ): # PIT-E
      longitude=np.array([ -102.5466 ])
      latitude=np.array([ -71.3301 ])
      depth=np.arange(0.,1160.,10.)
-   elif ( region == 'Amundsen' & mooring == 4 ): # PIT-W
+   elif ( region == 'Amundsen' ) & ( mooring == 4 ): # PIT-W
      longitude=np.array([ -113.0464 ])
      latitude=np.array([ -71.5621 ])
      depth=np.arange(0.,1160.,10.)
-   elif ( region == 'Amundsen' & mooring == 5 ): # mid shelf
+   elif ( region == 'Amundsen' ) & ( mooring == 5 ): # mid shelf
      longitude=np.array([ -106.53 ])
      latitude=np.array([ -73.81 ])
      depth=np.arange(0.,1160.,10.)
-   elif ( region == 'Amundsen' & mooring == 6 ): # Getz-Dotson NE 
+   elif ( region == 'Amundsen' ) & ( mooring == 6 ): # Getz-Dotson NE 
      longitude=np.array([ -114.99 ])
      latitude=np.array([ -71.16 ])
      depth=np.arange(0.,1160.,10.)
-   elif ( region == 'Amundsen' & mooring == 7 ): # Getz-Dotson SW
+   elif ( region == 'Amundsen' ) & ( mooring == 7 ): # Getz-Dotson SW
      longitude=np.array([ -118.46 ])
      latitude=np.array([ -71.96 ])
      depth=np.arange(0.,1160.,10.)
-   elif ( region == 'Amundsen' & mooring == 8 ): # Thwaites
+   elif ( region == 'Amundsen' ) & ( mooring == 8 ): # Thwaites
      longitude=np.array([ -104.825 ])
      latitude=np.array([ -75.207 ])
      depth=np.arange(0.,1160.,10.)
-   elif ( region == 'Weddell' & mooring == 1 ): # AWI_252
+   elif ( region == 'Weddell' ) & ( mooring == 1 ): # AWI_252
      longitude=np.array([ -30.47025 ])
      latitude=np.array([ -76.09135 ])
      #depth=np.array([335.2, 421.2])
      depth=np.arange(0.,1160.,10.)
-   elif ( region == 'Weddell' & mooring == 2 ): # AWI_253
+   elif ( region == 'Weddell' ) & ( mooring == 2 ): # AWI_253
      longitude=np.array([ -30.99475 ])
      latitude=np.array([ -76.0459 ])
      #depth=np.array([348.9, 433.8])
      depth=np.arange(0.,1160.,10.)
-   elif ( region == 'Weddell' & mooring == 3 ): # AWI_254
+   elif ( region == 'Weddell' ) & ( mooring == 3 ): # AWI_254
      longitude=np.array([ -31.48375 ]) 
      latitude=np.array([ -75.9624 ]) 
      #depth=np.array([ 553.0 ])
      depth=np.arange(0.,1160.,10.)
-   elif ( region == 'Weddell' & mooring == 4 ): # site 5
+   elif ( region == 'Weddell' ) & ( mooring == 4 ): # site 5
      longitude=np.array([ -54.71 ])
      latitude=np.array([ -80.29 ])
      depth=np.array([  ])
-   elif ( region == 'Weddell' & mooring == 5 ): # FSW
+   elif ( region == 'Weddell' ) & ( mooring == 5 ): # FSW
      longitude=np.array([ -44.43 ])
      latitude=np.array([ -80.44 ])
      depth=np.array([  ])
-   elif ( region == 'Weddell' & mooring == 6 ): # FSE
+   elif ( region == 'Weddell' ) & ( mooring == 6 ): # FSE
      longitude=np.array([ -40.83 ])
      latitude=np.array([ -81.08 ])
      depth=np.array([  ])
