@@ -1,12 +1,14 @@
 # misomip2
-A python package to process model outputs to standard MISOMIP2 format and to analyse MISOMIP2 multi-model outputs.
+A python repo to process model outputs to standard MISOMIP2 format and to analyse MISOMIP2 multi-model outputs. This is a repo that is meant to help modellers prepare their model outputs to the standard format required in MISOMIP2 (and, later, to analyse the outputs). It is not plug and play and requires some work for individual modellers to adapt the scripts to their model outputs. Please carefully check the results of these scripts as only basic checks have been done so far. Modellers are also free to use other scripts to match the requirements listed in [De Rydt et al. (2024)](https://doi.org/10.5194/gmd-17-7105-2024). 
 
-This package is written for python3 and largely based on [xarray](http://xarray.pydata.org) and [scipy.interpolate](https://docs.scipy.org/doc/scipy/reference/interpolate.html).
+Exampls of use are provided below for outputs from NEMO, MITgcm and ROMS.
 
-This package contains:
+The scripts are written for python3 and largely based on [xarray](http://xarray.pydata.org) and [scipy.interpolate](https://docs.scipy.org/doc/scipy/reference/interpolate.html).
+
+This repo includes:
 * **preproc** : contains functions used to pre-process model outputs, i.e. to interpolate them to the MISOMIP2 grids and write files with standard attributes ([More details here](https://github.com/nicojourdain/misomip2/tree/master/preproc/README.md)).
 * **examples** : contains scripts that can be used on provided test cases (e.g. to check that your python environment works) and that can be adapted to your specific output files.
-* **analysis** : (TO BE COMPLETED) contains functions used to analyse multiple model outputs that were previously interpolated to the common grids ([More details here](https://github.com/nicojourdain/misomip2/tree/master/analysis/README.md)).
+* **analysis** : (TO BE COMPLETED) will contain scripts used to analyse multiple model outputs that were previously interpolated to the common grids ([More details here](https://github.com/nicojourdain/misomip2/tree/master/analysis/README.md)).
 
 ### Contributors
 * Nicolas C. Jourdain (IGE, CNRS-UGA, Grenoble, France)
@@ -14,7 +16,7 @@ This package contains:
 * Yoshihiro Nakayama (Hokkaido University, Japan)
 * Ole Richter (Alfred Wegener Institute, Germany)
 
-All MISOMIP participants who want to contribute to this package are invited to fork this github repo and make a pull request as [documented here](https://opensource.com/article/19/7/create-pull-request-github).
+All MISOMIP participants who want to contribute to this repo are invited to fork this github repo and make a pull request as [documented here](https://opensource.com/article/19/7/create-pull-request-github).
 
 ### Install
 If you don't have a python environment yet, you can install anaconda following [this page](https://docs.anaconda.com/anaconda/install/).
@@ -29,7 +31,7 @@ conda install -c conda-forge gsw
 # or conda install -c conda-forge/label/cf202003 gsw
 ```
 
-Then, clone the misomip2 package :
+Then, clone the misomip2 repo :
 
 ```bash
 git clone https://github.com/nicojourdain/misomip2.git
