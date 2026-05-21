@@ -664,7 +664,7 @@ for moor in np.arange(1,9,1,dtype='int'):
    if is_all_nan:
 
       print('No points found for mooring',moor,' at (lon,lat) = ',lon_moor0d,lat_moor0d)
-      print('   >>>>>>> file not saved'
+      print('   >>>>>>> file not saved')
 
    else:
 
