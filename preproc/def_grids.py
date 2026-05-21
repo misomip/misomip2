@@ -54,16 +54,17 @@ def generate_3d_grid_oce(region='Amundsen'):
 def generate_section_grid_oce(region='Amundsen',section=1):
    """Generates (longitude, latitude, depth) of the common MISOMIP2 ocean section
 
-      region: 'Amundsen' (default), 'Weddell'
+      region:  'Amundsen' (default)
+               'Weddell'
 
       section: 1 (default) -> Pine Island Trough for Amundsen
-                           -> Filchner Ice Shelf front for Weddell
                2           -> Dotson Trough for Amundsen
-                           -> Ronne Ice Shelf front for Weddell
-               3           -> /not defined/ for Amundsen
-                           -> section at 76degS for Weddell
 
-      exemple: [lon,lat,depth]=generate_section_grid_oce(region='Amundsen')
+               1 (default) -> Filchner Ice Shelf front for Weddell
+               2           -> Ronne Ice Shelf front for Weddell
+               3           -> section at 76degS for Weddell
+
+      exemple: [lon,lat,depth]=generate_section_grid_oce(region='Amundsen',section=2)
    """
 
    if ( region == 'Amundsen' ) & ( section == 1 ): # Pine Island Trough
@@ -105,6 +106,8 @@ def generate_section_grid_oce(region='Amundsen',section=1):
                           -118.227, -118.282, -118.338, -118.393, -118.448 ])
      latitude=np.arange(-75.05+1./30.,-71.95+1./30.,1./30.)
      depth=np.arange(0.,1505.,5.)   
+   elif ( region == 'Amundsen' ):
+     sys.exit("~!@#$%^* error : Section not defined for Amundsen region")
    elif ( region == 'Weddell' ) & ( section == 1 ): # SR04
      longitude=np.arange(-55,-9.9,0.1)
      latitude=np.array([-62.92608857142859 ,  -62.94654571428573 ,  -62.96700285714287 ,  -62.98746000000001 ,  -63.00791714285716 ,
@@ -263,6 +266,8 @@ def generate_section_grid_oce(region='Amundsen',section=1):
                          -77.13152875816994 ,  -77.13051568627450 ,  -77.12950261437909 ,  -77.12848954248366 ,  -77.12747647058823 ,
                          -77.1264634 ])
      depth=np.arange(0.,650.,5.)
+   elif ( region == 'Weddell' ):   
+     sys.exit("~!@#$%^* error : Section not defined for Weddell region")
    else:
      sys.exit("~!@#$%^* error : region is not defined, choose either 'Amundsen' or 'Weddell'")
 
@@ -275,18 +280,26 @@ def generate_section_grid_oce(region='Amundsen',section=1):
 def generate_mooring_grid_oce(region='Amundsen',mooring=1):
    """Generates (longitude, latitude, depth) of the common MISOMIP2 mooring
 
-      region: 'Amundsen' (default), 'Weddell'
+      region:  'Amundsen' (default)
+               'Weddell'
 
-      mooring: 1 -> PIG-N for Amundsen
-               2 -> PIG-S for Amundsen
-               3 -> PIT-E for Amundsen
-               4 -> PIT-W for Amundsen
+      mooring: 1 (default) -> PIG-N for Amundsen
+               2           -> PIG-S for Amundsen
+               3           -> PIT-E for Amundsen
+               4           -> PIT-W for Amundsen
+               5           -> mid-shelf for Amundsen
+               6           -> Getz-Dotson NE for Amundsen
+               7           -> Getz-Dotson SW for Amundsen
+               8           -> Thwaites for Amundsen
 
-               1 -> AWI_252 for Weddell
-               2 -> AWI_253 for Weddell
-               3 -> AWI_254 for Weddell
+               1 (default) -> AWI_252 for Weddell
+               2           -> AWI_253 for Weddell
+               3           -> AWI_254 for Weddell
+               4           -> site 5 for Weddell
+               5           -> FSW for Weddell
+               6           -> FSE for Weddell
 
-      exemple: [lon,lat,depth]=generate_mooring_grid_oce(region='Amundsen')
+      exemple: [lon,lat,depth]=generate_mooring_grid_oce(region='Amundsen',mooring=2)
    """
 
    if ( region == 'Amundsen' ) & ( mooring == 1 ): # PIG-N
@@ -321,6 +334,8 @@ def generate_mooring_grid_oce(region='Amundsen',mooring=1):
      longitude=np.array([ -104.825 ])
      latitude=np.array([ -75.207 ])
      depth=np.arange(0.,1160.,10.)
+   elif ( region == 'Amundsen' ):
+     sys.exit("~!@#$%^* error : mooring number not defined for Amundsen")
    elif ( region == 'Weddell' ) & ( mooring == 1 ): # AWI_252
      longitude=np.array([ -30.47025 ])
      latitude=np.array([ -76.09135 ])
@@ -348,6 +363,8 @@ def generate_mooring_grid_oce(region='Amundsen',mooring=1):
      longitude=np.array([ -40.83 ])
      latitude=np.array([ -81.08 ])
      depth=np.array([  ])
+   elif ( region == 'Weddell' ):
+     sys.exit("~!@#$%^* error : mooring number not defined for Weddell")
    else:
      sys.exit("~!@#$%^* error : region is not defined, choose either 'Amundsen' or 'Weddell'")
 
