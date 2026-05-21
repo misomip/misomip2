@@ -34,8 +34,8 @@ conda install -c conda-forge gsw
 Then, clone the misomip2 repo :
 
 ```bash
-git clone https://github.com/nicojourdain/misomip2.git
-# or git clone git@github.com:nicojourdain/misomip2.git
+git clone https://github.com/misomip/misomip2.git
+# or git clone git@github.com:misomip/misomip2.git
 ```
 
 You can update the cloned directory anytime with ```git pull``` executed in that directory. 
