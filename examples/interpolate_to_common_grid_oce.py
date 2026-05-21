@@ -33,6 +33,8 @@ test_case='ROMS_test'
 #test_case='eORCA025_test'
 
 reg='Amundsen' # 'Amundsen' or 'Weddell'
+sec = 1        # section number (1,2 for Amundsen, 1,2,3 for Weddel)
+moor = 2       # mooring number ([1:8] for Amundsen and [1:6] for Weddell)
 
 data_dir='test_cases/oce/'+test_case
 
@@ -500,7 +502,7 @@ print('  Execution time: ',datetime.now() - startTime)
 # 4a- Interpolate to common section :
 
 # Characteristics of MISOMIP section grid:
-[lon_sect1d,lat_sect1d,dep_sect] = mp.generate_section_grid_oce(region=reg)
+[lon_sect1d,lat_sect1d,dep_sect] = mp.generate_section_grid_oce(region=reg,section=sec)
 mlonlatsec = np.size(lon_sect1d)
 mdepsect = np.size(dep_sect)
 
@@ -598,7 +600,7 @@ put_global_attrs(dssect, experiment=exp, avg_hor_res_73S=res_73S, original_sim_n
                  original_min_lat=oce.attrs.get('original_minlat'),original_max_lat=oce.attrs.get('original_maxlat'),\
                  original_min_lon=oce.attrs.get('original_minlon'),original_max_lon=oce.attrs.get('original_maxlon') )
 
-file_sect = 'OceSec_'+model+'-'+institute+'_'+abc+'_'+exp+'_'+period+'.nc'
+file_sect = 'OceSec'+str(sec)+'_'+model+'-'+institute+'_'+abc+'_'+exp+'_'+period+'.nc'
 
 print('Creating ',file_sect)
 dssect.to_netcdf(file_sect,unlimited_dims="time")
@@ -616,7 +618,7 @@ print('  Execution time: ',datetime.now() - startTime)
 #     can be located in the cavity of some models).
 
 # Characteristics of MISOMIP mooring:
-[lon_moor0d,lat_moor0d,dep_moor] = mp.generate_mooring_grid_oce(region=reg)
+[lon_moor0d,lat_moor0d,dep_moor] = mp.generate_mooring_grid_oce(region=reg,mooring=moor)
 mdepmoor = np.size(dep_moor)
 
 # Reduce input data size
@@ -705,7 +707,7 @@ put_global_attrs(dsmoor, experiment=exp, avg_hor_res_73S=res_73S, original_sim_n
 dsmoor.attrs['mooring_longitude'] = np.float32(lon_moor0d)
 dsmoor.attrs['mooring_latitude'] = np.float32(lat_moor0d)
 
-file_moor = 'OceMoor_'+model+'-'+institute+'_'+abc+'_'+exp+'_'+period+'.nc'
+file_moor = 'OceMoor'+str(moor)+'_'+model+'-'+institute+'_'+abc+'_'+exp+'_'+period+'.nc'
 
 print('Creating ',file_moor)
 dsmoor.to_netcdf(file_moor,unlimited_dims="time")
