@@ -132,6 +132,8 @@ def horizontal_interp( lat_in_1d, lon_in_1d, mlat_misomip, mlon_misomip, lat_out
        lat_in_1d_nonan = lat_in_1d.where( (~np.isnan(var_in_1d)) & (~np.isinf(var_in_1d)), drop=True )
        if ( np.size(weight) == 0 ):
          txxxx = interpolate.griddata( (lon_in_1d_nonan.values,lat_in_1d_nonan.values), var1d_nonan.values, (lon_out_1d,lat_out_1d), method='linear', fill_value=np.nan )
+       elif ( np.sum(weight != 0) < 4 ): # 4 points needed for interpolation
+         txxxx = np.zeros((np.size(lon_out_1d)))+miss
        else:
          wgt1d_nonan = weight.where( (~np.isnan(var_in_1d)) & (~np.isinf(var_in_1d)), drop=True )
          wgt1d_nonan = wgt1d_nonan.where( ~np.isnan(wgt1d_nonan) & ~np.isinf(wgt1d_nonan), 0.e0 ) # if nan in mask but not in input data
