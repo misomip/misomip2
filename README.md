@@ -23,7 +23,7 @@ If you don't have a python environment yet, you can install anaconda following [
 
 If these modules are not installed (check with ```conda list```), install them:
 ```bash
-conda install numpy xarray scipy
+conda install numpy xarray scipy netcdf4
 conda install dask pyproj
 conda install -c conda-forge gsw 
 # or conda install -c conda-forge/label/gcc7 gsw 
@@ -91,10 +91,10 @@ Then, execute the script as follows:
 ```bash
 python interpolate_to_common_grid_oce.py
 ```
-This should create the following files:
+This should create the following files (here for NEMO and section 1 and mooring 2):
 * Oce3d\_NEMO3.6-IGE-CNRS-UGA\_a\_Ocean-A1\_201001-201002.nc
-* OceSec\_NEMO3.6-IGE-CNRS-UGA\_a\_Ocean-A1\_201001-201002.nc
-* OceMoor\_NEMO3.6-IGE-CNRS-UGA\_a\_Ocean-A1\_201001-201002.nc
+* OceSec1\_NEMO3.6-IGE-CNRS-UGA\_a\_Ocean-A1\_201001-201002.nc
+* OceMoor2\_NEMO3.6-IGE-CNRS-UGA\_a\_Ocean-A1\_201001-201002.nc
 
 On a laptop (16Gb, 2GHz), the test cases took the following durations:
 * NEMO\_test : 48s (smaller than MISOMIP2 domain; all variables calculated). 
