@@ -13,8 +13,7 @@
 import numpy as np
 import xarray as xr
 import sys
-sys.path.append("/ccc/work/cont003/gen6035/mathiotp/MISOMIP2/")
-#sys.path.append("/Users/jourdain/MY_SCRIPTS")
+sys.path.append("/Users/jourdain/MY_SCRIPTS")
 #sys.path.append("/Users/nakayama/Documents/GitHub/")
 import misomip2.preproc as mp
 import os
