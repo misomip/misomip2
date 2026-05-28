@@ -156,7 +156,7 @@ for reg in tasks.keys():
 
         oce = mp.load_oce_mod_nemo( file_mesh_mask=f_mesh, file_bathy=f_bathy, files_gridT=fs_gridT,\
                      files_gridU=fs_gridU, files_gridV=fs_gridV, files_SBC=fs_SBC, files_ice=fs_ice,\
-                     files_BSF=fs_BSF, rho0=1026.0, teos10=True )
+                     files_BSF=fs_BSF, rho0=1026.0, teos10=True, region=reg )
 
     elif ( test_case[0:6] == 'MITGCM' ):
 
@@ -166,7 +166,7 @@ for reg in tasks.keys():
         fU = data_dir+'/'+test_case+'_UVEL.nc'
         fV = data_dir+'/'+test_case+'_VVEL.nc'
 
-        oce = mp.load_oce_mod_mitgcm( files_T=fT, files_S=fS, files_U=fU, files_V=fV, rho0=1026.0, teos10=False )
+        oce = mp.load_oce_mod_mitgcm( files_T=fT, files_S=fS, files_U=fU, files_V=fV, rho0=1026.0, teos10=False, region=reg )
 
     elif ( test_case[0:4] == 'ROMS' ):
 
@@ -174,7 +174,7 @@ for reg in tasks.keys():
         f_grid = data_dir+'/ROMS_test_grid.nc'
         f_ALL  = [data_dir+'/'+test_case+'_m0'+month.astype('str')+'.nc' for month in np.arange(1,4)]
 
-        oce = mp.load_oce_mod_roms( files_M=f_grid, files_T=f_ALL, rho0=1026.0, teos10=False )
+        oce = mp.load_oce_mod_roms( files_M=f_grid, files_T=f_ALL, rho0=1026.0, teos10=False, region=reg )
 
     else:
 
