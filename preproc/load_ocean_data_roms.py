@@ -96,7 +96,7 @@ def load_oce_mod_roms(files_T='ROMS_all.nc',\
         if np.issubdtype(ds[v].dtype, np.floating):
             ds[v] = ds[v].fillna(fill_value)
     return ds
-    
+
    ncT, ncS, ncU, ncV, ncI, ncSRF, ncM = [fill_float_nan(ds) for ds in [ncT, ncS, ncU, ncV, ncI, ncSRF, ncM]]
 
    # longitude & latitude on U, V, T grids
@@ -221,8 +221,8 @@ def load_oce_mod_roms(files_T='ROMS_all.nc',\
      TAUX = ncU.utau
    elif ( "TAUX" in ncU.data_vars ):
      TAUX = ncU.TAUX
-   elif ( "sustr" in ncU.data_vars ):
-     TAUX = ncU.sustr
+   elif ( "sustr" in ncV.data_vars ):
+     TAUX = ncV.sustr
    else:
      print('    WARNING :   No data found for TAUX  -->  filled with NaNs')
      TAUX = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'eta_u', 'xi_u'] )
@@ -232,8 +232,8 @@ def load_oce_mod_roms(files_T='ROMS_all.nc',\
      TAUY = ncV.vtau
    elif ( "TAUY" in ncV.data_vars ):
      TAUY = ncV.TAUY
-   elif ( "sustr" in ncV.data_vars ):
-     TAUY = ncV.sustr
+   elif ( "svstr" in ncV.data_vars ):
+     TAUY = ncV.svstr
    else:
      print('    WARNING :   No data found for TAUY  -->  filled with NaNs')
      TAUY = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'eta_v', 'xi_v'] )
@@ -396,65 +396,44 @@ def load_oce_mod_roms(files_T='ROMS_all.nc',\
    newdepth = np.append( np.arange(0.,70.,10.), np.arange(80.,1520.,20.) )
 
    mz = np.size(newdepth)
-   # Note that theta_s, theta_b and hc are 0-D scalars, and so indexing with [0] fails. Also, in ROMS_test this is 
+   # Note that theta_s, theta_b and hc are 0-D scalars, and so indexing with [0] fails. Also, in ROMS_test this is
    # a vector e.g. [4 4 4], so need to ravel then take [0]
-   ztmp_rho = calc_z( ncM.h.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, \
+   ztmp = calc_z( ncM.h.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, \
                   ncM.zice.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, \
                   np.ravel(ncT.theta_s.values)[0], np.ravel(ncT.theta_b.values)[0], np.ravel(ncT.hc.values)[0], ms, \
                   zeta=None, Vstretching=np.ravel(ncT.Vstretching.values)[0] )
-   ztmp_rho=ztmp_rho*(-1)
-
-   # DEG2205: Note that the u and v grids will have different sizes to the rho grid,
-   # and so ztmp must be recomputed, as the average in the u and v directions:
-   # also rename ztmp to ztmp_rho
-   ztmp_u = 0.5 * (ztmp_rho[:, :, :-1] + ztmp_rho[:, :, 1:])
-   ztmp_v = 0.5 * (ztmp_rho[:, :-1, :] + ztmp_rho[:, 1:, :])
+   ztmp=ztmp*(-1)
 
    # sea fraction in Z space:
    DepTUV = xr.DataArray( newdepth, dims=['z'], coords=dict( z=(['z'], newdepth) ) )
    DEPTHOT = DEPTHO.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1))
    DEPFLFT = DEPFLF.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1))
-   #DEPTHOU = xr.DataArray( 0.5 * (DEPTHOT.values+DEPTHOT.shift(xi_rho=1).values), dims=['eta_u', 'xi_u'] )   #DEG2205: Note changes to fix calculation of staggered grid.
-   DEPTHOU = xr.DataArray(0.5 * (DEPTHOT.isel(xi_rho=slice(0, -1)) + DEPTHOT.isel(xi_rho=slice(1, None))).values,dims=["eta_u", "xi_u"])
-   #DEPFLFU = xr.DataArray( 0.5 * (DEPFLFT.values+DEPFLFT.shift(xi_rho=1).values), dims=['eta_u', 'xi_u'] )
-   DEPFLFU = xr.DataArray(0.5 * (DEPFLFT.isel(xi_rho=slice(0, -1)) + DEPFLFT.isel(xi_rho=slice(1, None))).values,dims=["eta_u", "xi_u"])
-   #DEPTHOV = xr.DataArray( 0.5 * (DEPTHOT.values+DEPTHOT.shift(eta_rho=1).values), dims=['eta_v', 'xi_v'] )
-   DEPTHOV = xr.DataArray(0.5 * (DEPTHOT.isel(eta_rho=slice(0, -1)) + DEPTHOT.isel(eta_rho=slice(1, None))).values,dims=["eta_v", "xi_v"])
-   #DEPFLFV = xr.DataArray( 0.5 * (DEPFLFT.values+DEPFLFT.shift(eta_rho=1).values), dims=['eta_v', 'xi_v'] )
-   DEPFLFV = xr.DataArray(0.5 * (DEPFLFT.isel(eta_rho=slice(0, -1)) + DEPFLFT.isel(eta_rho=slice(1, None))).values,dims=["eta_v", "xi_v"])
+   DEPTHOU = xr.DataArray( 0.5 * (DEPTHOT.values+DEPTHOT.shift(xi_rho=1).values), dims=['eta_u', 'xi_u'] )
+   DEPFLFU = xr.DataArray( 0.5 * (DEPFLFT.values+DEPFLFT.shift(xi_rho=1).values), dims=['eta_u', 'xi_u'] )
+   DEPTHOV = xr.DataArray( 0.5 * (DEPTHOT.values+DEPTHOT.shift(eta_rho=1).values), dims=['eta_v', 'xi_v'] )
+   DEPFLFV = xr.DataArray( 0.5 * (DEPFLFT.values+DEPFLFT.shift(eta_rho=1).values), dims=['eta_v', 'xi_v'] )
 
-   LEVOFT = xr.DataArray( np.ones((mz,np.shape(ztmp_rho)[1],np.shape(ztmp_rho)[2]))*100., dims=['z', 'eta_rho', 'xi_rho'], coords=dict( z=(['z'], newdepth) ) )
+   LEVOFT = xr.DataArray( np.ones((mz,np.shape(ztmp)[1],np.shape(ztmp)[2]))*100., dims=['z', 'eta_rho', 'xi_rho'], coords=dict( z=(['z'], newdepth) ) )
    LEVOFT = LEVOFT.where( ( (DepTUV==0.) & (DEPFLFT==0.) ) | ( (DEPTHOT>DepTUV) & (DEPFLFT<DepTUV) ), 0.e0 ) \
             * ncM.mask_rho.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1))
-   LEVOFU = xr.DataArray( np.ones((mz,np.shape(ztmp_u)[1],np.shape(ztmp_u)[2]))*100., dims=['z', 'eta_u', 'xi_u'], coords=dict( z=(['z'], newdepth) ) )
-   print(DepTUV.shape)
-   print(DEPFLFU.shape)
-   print(DEPTHOU.shape)
-   print(DEPFLFU.shape)
-   print(ncM.mask_u.shape)
-   print(ncM.mask_u.isel(xi_u=slice(imin,imax+1),eta_u=slice(jmin,jmax+1)).shape)
-   print(jmin)
-   print(jmax)
-   print(imin)
-   print(imax)
-
+   LEVOFU = xr.DataArray( np.ones((mz,np.shape(ztmp)[1],np.shape(ztmp)[2]))*100., dims=['z', 'eta_u', 'xi_u'], coords=dict( z=(['z'], newdepth) ) )
    LEVOFU = LEVOFU.where( ( (DepTUV==0.) & (DEPFLFU==0.) ) | ( (DEPTHOU>DepTUV) & (DEPFLFU<DepTUV) ), 0.e0 ) \
             * ncM.mask_u.isel(xi_u=slice(imin,imax+1),eta_u=slice(jmin,jmax+1))
-   LEVOFV = xr.DataArray( np.ones((mz,np.shape(ztmp_v)[1],np.shape(ztmp_v)[2]))*100., dims=['z', 'eta_v', 'xi_v'], coords=dict( z=(['z'], newdepth) ) )
+   LEVOFV = xr.DataArray( np.ones((mz,np.shape(ztmp)[1],np.shape(ztmp)[2]))*100., dims=['z', 'eta_v', 'xi_v'], coords=dict( z=(['z'], newdepth) ) )
    LEVOFV = LEVOFV.where( ( (DepTUV==0.) & (DEPFLFV==0.) ) | ( (DEPTHOV>DepTUV) & (DEPFLFV<DepTUV) ), 0.e0 ) \
             * ncM.mask_v.isel(xi_v=slice(imin,imax+1),eta_v=slice(jmin,jmax+1))
 
-   ZMODT = xr.DataArray( ztmp_rho, dims=['s_rho', 'eta_rho', 'xi_rho'] )
-   ZMODU = xr.DataArray( ztmp_u, dims=['s_rho', 'eta_u', 'xi_u'] )
-   ZMODV = xr.DataArray( ztmp_v, dims=['s_rho', 'eta_v', 'xi_v'] )
+   ZMODT = xr.DataArray( ztmp, dims=['s_rho', 'eta_rho', 'xi_rho'] )
+   ZMODU = xr.DataArray( ztmp, dims=['s_rho', 'eta_u', 'xi_u'] )
+   ZMODV = xr.DataArray( ztmp, dims=['s_rho', 'eta_v', 'xi_v'] )
    SO_red = SO.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1))
    THETAO_red = THETAO.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1))
    UX_red = UX.isel(xi_u=slice(imin,imax+1),eta_u=slice(jmin,jmax+1))
    VY_red = VY.isel(xi_v=slice(imin,imax+1),eta_v=slice(jmin,jmax+1))
-   SO_z = np.zeros((mtime,mz,np.shape(ztmp_rho)[1],np.shape(ztmp_rho)[2]))
-   THETAO_z = np.zeros((mtime,mz,np.shape(ztmp_rho)[1],np.shape(ztmp_rho)[2]))
-   UX_z = np.zeros((mtime,mz,np.shape(ztmp_u)[1],np.shape(ztmp_u)[2]))
-   VY_z = np.zeros((mtime,mz,np.shape(ztmp_v)[1],np.shape(ztmp_v)[2]))
+   SO_z = np.zeros((mtime,mz,np.shape(ztmp)[1],np.shape(ztmp)[2]))
+   THETAO_z = np.zeros((mtime,mz,np.shape(ztmp)[1],np.shape(ztmp)[2]))
+   UX_z = np.zeros((mtime,mz,np.shape(ztmp)[1],np.shape(ztmp)[2]))
+   VY_z = np.zeros((mtime,mz,np.shape(ztmp)[1],np.shape(ztmp)[2]))
 
    for kk in np.arange(np.size(newdepth)):
 
