@@ -21,6 +21,7 @@ import os
 from datetime import datetime
 
 startTime = datetime.now()
+print(startTime)
 
 np.seterr(divide='ignore', invalid='ignore') # to avoid warning due to divide by zero
 
@@ -30,8 +31,8 @@ np.seterr(divide='ignore', invalid='ignore') # to avoid warning due to divide by
 # Choose a test case:
 #test_case='NEMO_test'
 #test_case='MITGCM_test'
-#test_case='ROMS'
-test_case='ROMS_test'
+test_case='ROMS_UTAS'
+#test_case='ROMS_test'
 #test_case='eORCA025_test'
 
 reg='Amundsen' # 'Amundsen' or 'Weddell'
@@ -109,7 +110,7 @@ elif ( test_case[0:6] == 'MITGCM' ):
 
    oce = mp.load_oce_mod_mitgcm( files_T=fT, files_S=fS, files_U=fU, files_V=fV, rho0=1026.0, teos10=False )
 
-elif ( test_case == 'ROMS_test' ):
+elif ( test_case[0:4] == 'ROMS' ):
 
    model='ROMS'             # model name, possibly including a version number
    institute='UTAS'         # name of the institute(s) that produced the simulation
@@ -119,28 +120,32 @@ elif ( test_case == 'ROMS_test' ):
    exp='Ocean-A1'           # MISOMIP2 experiment name (e.g., Ocean-A1, Ocean-W1, IceOcean-A1...)
    original_sim_name='random cirum-Antarctic test case'
 
-   print('LOADING ROMS test data from WAOM (Richter et al)...')
-   f_grid = data_dir+'/ROMS_test_grid.nc'
-   f_ALL  = [data_dir+'/'+test_case+'_m0'+month.astype('str')+'.nc' for month in np.arange(1,4)]
+   loading_method = 'interpolated'  # options: 'interpolated' or 'standard'
+                                    # 'interpolated' moves all of the u,v fields to the rho grid
+                                    # 'standard' subsets the u,v grid in the same way as the rho grid. <-- Note that this will
+                                    #  fail for a model grid that is not larger than the misomip2 target grid.
 
-   oce = mp.load_oce_mod_roms( files_M=f_grid, files_T=f_ALL, rho0=1026.0, teos10=False )
+   if test_case == 'ROMS_test':
+        print('LOADING ROMS test data from WAOM (Richter et al)...')
+        f_grid = data_dir+'/ROMS_test_grid.nc'
+        f_ALL  = [data_dir+'/'+test_case+'_m0'+month.astype('str')+'.nc' for month in np.arange(1,4)]
 
-elif ( test_case == 'ROMS' ):
+        oce = mp.load_oce_mod_roms( files_M=f_grid, files_T=f_ALL, rho0=1026.0, teos10=False )
 
-   model='ROMS'             # model name, possibly including a version number
-   institute='UTAS'         # name of the institute(s) that produced the simulation
-                            #    (use "-" rather than "_" for multiple entities)
-   abc='a'                  # single letter used to distinguish multiple set-up produced by a given institute
-                            #    (e.g., difference or model parameters, resolution, initial states or boundary conditions)
-   exp='Ocean-A1'           # MISOMIP2 experiment name (e.g., Ocean-A1, Ocean-W1, IceOcean-A1...)
-   original_sim_name='random cirum-Antarctic test case'
+   else:
+        data_dir='/g/data/jk72/deg581/amundsen-isom/mdl/amundsen_IAF/'   # set directory of output data
+        f_grid = '/g/data/jk72/deg581/amundsen-isom/amundsen-setup/data/proc/amundsen_2.5km_v1.5_grd.nc' # grid file directory
+        f_ALL  = [f"{data_dir}/roms_his_{month:04d}_monmean12.nc" for month in range(1, 2)]  #file list for model output, tweak filename format.
+        print(f_ALL)
 
-   print('LOADING ROMS files...')
-   data_dir='/g/data/jk72/deg581/amundsen-isom/mdl/amundsen_IAF/'
-   f_grid = '/g/data/jk72/deg581/amundsen-isom/amundsen-setup/data/proc/amundsen_2.5km_v1.5_grd.nc'
-   f_ALL  = [f"{data_dir}/roms_his_{month:04d}.nc" for month in range(1, 2)]
-   print(f_ALL)
-   oce = mp.load_oce_mod_roms( files_M=f_grid, files_T=f_ALL, rho0=1026.0, teos10=False )
+        if loading_method == 'interpolated':
+            print('using method that will average u,v points to rho points')
+            oce = mp.load_oce_mod_roms_rho( files_M=f_grid, files_T=f_ALL, rho0=1026.0, teos10=False )
+        elif loading_method == 'standard':
+            print('using method that will extract directly from u,v grid')
+            oce = mp.load_oce_mod_roms( files_M=f_grid, files_T=f_ALL, rho0=1026.0, teos10=False )
+        else:
+            print('please choose loading method.')
 
 else:
 
