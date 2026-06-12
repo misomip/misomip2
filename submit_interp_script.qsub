@@ -1,0 +1,20 @@
+#!/bin/bash
+#PBS -P jk72
+#PBS -q normal
+#PBS -l mem=190gb,walltime=48:00:00,ncpus=1
+#PBS -l storage=gdata/jk72+scratch/jk72+scratch/lz81+scratch/gi0
+#PBS -l wd
+#PBS -N amundsen_hind_a
+#PBS -M d.gwyther@utas.edu.au
+
+cd $PBS_O_WORKDIR
+
+
+# Load conda
+source /g/data/jk72/deg581/miniconda3/etc/profile.d/conda.sh
+conda activate devel3.11
+which python >> run.log
+python -c "import sys; print(sys.executable)" >> run.log
+
+# Run script
+python examples/interpolate_to_common_grid_oce.py >> run.log 2>&1

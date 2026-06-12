@@ -1,2 +1,8 @@
-examples/*.nc
+*.nc
 *.ipynb*
+amundsen_hind_a.e*
+amundsen_hind_a.o*
+*.swp
+*.swx
+run.log
+

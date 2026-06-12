@@ -17,7 +17,7 @@ def load_oce_mod_roms_rho(files_T='ROMS_all.nc',\
                       files_I='dummy',\
                       files_SRF='dummy',\
                       files_M='dummy',\
-                      rho0=1026.0, teos10=False, region='Amundsen', parallel=False ):
+                      rho0=1026.0, teos10=False, region='Amundsen', parallel=False, out_nc=None, save_to_netcdf=False):
    """ Read ROMS outputs and define an xarray dataset containing 
        all variables required in MISOMIP2. It automatically detects
        whether coordinates are stereographic or lon-lat.
@@ -529,10 +529,14 @@ def load_oce_mod_roms_rho(files_T='ROMS_all.nc',\
    THETAO_z = np.zeros((mtime,mz,np.shape(ztmp)[1],np.shape(ztmp)[2]))
    UX_z = np.zeros((mtime,mz,np.shape(ztmp)[1],np.shape(ztmp)[2]))
    VY_z = np.zeros((mtime,mz,np.shape(ztmp)[1],np.shape(ztmp)[2]))
-   
+
+   import os, psutil
    nz = np.size(newdepth)
    for kk in np.arange(np.size(newdepth)):
      print(f"\nDepth {kk+1}/{nz}")
+     rss = psutil.Process(os.getpid()).memory_info().rss / 1024**3
+     print(f"RSS = {rss:.1f} GB", flush=True)
+     print('...')
 
      tmpaT = ZMODT - newdepth[kk]
      tmpaT = tmpaT.where( tmpaT >= 0., 1.e20 )
@@ -594,6 +598,19 @@ def load_oce_mod_roms_rho(files_T='ROMS_all.nc',\
    #----------
    # Create new xarray dataset including all useful variables:
    # reshaping (x,y) as 1-dimensional (sxy)
+   def mem():
+    rss_gb = psutil.Process(os.getpid()).memory_info().rss / 1024**3
+    print(f"RSS = {rss_gb:.1f} GB", flush=True)
+   
+   print("Before Dataset")
+   mem()
+   print("ABOUT TO BUILD DATASET")
+
+   print("SO_z:", SO_z.nbytes / 1024**3, "GB")
+   print("THETAO_z:", THETAO_z.nbytes / 1024**3, "GB")
+   print("UX_z:", UX_z.nbytes / 1024**3, "GB")
+   print("VY_z:", VY_z.nbytes / 1024**3, "GB")
+   print("SUM:", (SO_z.nbytes + THETAO_z.nbytes + UX_z.nbytes + VY_z.nbytes)/1024**3)
 
    nxy=(jmax-jmin+1)*(imax-imin+1)
 
@@ -653,7 +670,14 @@ def load_oce_mod_roms_rho(files_T='ROMS_all.nc',\
       "original_maxlon": domain_maxlon
       },
    )
+   print("After Dataset")
+   mem()
+   print('    Load duration: ',datetime.now() - startTime, flush=True)
 
-   print('    Load duration: ',datetime.now() - startTime)
+   if save_to_netcdf:
+        print("Writing dataset to netCDF at "+str(datetime.now()), flush=True)
+        ds.to_netcdf(out_nc, mode="w")
+        print("Finished writing netCDF at "+str(datetime.now()), flush=True)
+        return None
 
    return ds

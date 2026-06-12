@@ -436,10 +436,15 @@ def load_oce_mod_roms(files_T='ROMS_all.nc',\
    THETAO_z = np.zeros((mtime,mz,np.shape(ztmp)[1],np.shape(ztmp)[2]))
    UX_z = np.zeros((mtime,mz,np.shape(ztmp)[1],np.shape(ztmp)[2]))
    VY_z = np.zeros((mtime,mz,np.shape(ztmp)[1],np.shape(ztmp)[2]))
-
+    
+   import os, psutil
    nz = np.size(newdepth)
    for kk in np.arange(np.size(newdepth)):
      print(f"\nDepth {kk+1}/{nz}")
+     rss = psutil.Process(os.getpid()).memory_info().rss / 1024**3
+     print(f"RSS = {rss:.1f} GB", flush=True)
+     print('...')
+
      tmpaT = ZMODT - newdepth[kk]
      tmpaT = tmpaT.where( tmpaT >= 0., 1.e20 )
      msksupT = tmpaT.where( tmpaT==tmpaT.min('s_rho'), 0.e0 )
