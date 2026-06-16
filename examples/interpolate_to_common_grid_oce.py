@@ -13,15 +13,13 @@
 import numpy as np
 import xarray as xr
 import sys
-#sys.path.append("/Users/jourdain/MY_SCRIPTS")
+sys.path.append("/Users/jourdain/MY_SCRIPTS")
 #sys.path.append("/Users/nakayama/Documents/GitHub/")
-sys.path.append("/g/data/jk72/deg581/amundsen-isom/ana/")
 import misomip2.preproc as mp
 import os
 from datetime import datetime
 
 startTime = datetime.now()
-print(startTime)
 
 np.seterr(divide='ignore', invalid='ignore') # to avoid warning due to divide by zero
 
@@ -31,13 +29,12 @@ np.seterr(divide='ignore', invalid='ignore') # to avoid warning due to divide by
 # Choose a test case:
 #test_case='NEMO_test'
 #test_case='MITGCM_test'
-test_case='ROMS_UTAS'
-#test_case='ROMS_test'
+test_case='ROMS_test'
 #test_case='eORCA025_test'
 
 reg='Amundsen' # 'Amundsen' or 'Weddell'
 
-data_dir='examples/test_cases/oce/'+test_case
+data_dir='test_cases/oce/'+test_case
 
 missval=9.969209968386869e36 # missing value in created netcdf files
 
@@ -120,43 +117,11 @@ elif ( test_case[0:4] == 'ROMS' ):
    exp='Ocean-A1'           # MISOMIP2 experiment name (e.g., Ocean-A1, Ocean-W1, IceOcean-A1...)
    original_sim_name='random cirum-Antarctic test case'
 
-   loading_method = 'interpolated'  # options: 'interpolated' or 'standard'
-                                    # 'interpolated' moves all of the u,v fields to the rho grid
-                                    # 'standard' subsets the u,v grid in the same way as the rho grid. <-- Note that this will
-                                    #  fail for a model grid that is not larger than the misomip2 target grid.
+   print('LOADING ROMS...')
+   f_grid = data_dir+'/ROMS_test_grid.nc'
+   f_ALL  = [data_dir+'/'+test_case+'_m0'+month.astype('str')+'.nc' for month in np.arange(1,4)]
 
-   if test_case == 'ROMS_test':
-        print('LOADING ROMS test data from WAOM (Richter et al)...')
-        f_grid = data_dir+'/ROMS_test_grid.nc'
-        f_ALL  = [data_dir+'/'+test_case+'_m0'+month.astype('str')+'.nc' for month in np.arange(1,4)]
-
-        oce = mp.load_oce_mod_roms( files_M=f_grid, files_T=f_ALL, rho0=1026.0, teos10=False )
-
-   else:
-        data_dir='/g/data/jk72/deg581/amundsen-isom/mdl/amundsen_IAF/'   # set directory of output data
-        f_grid = '/g/data/jk72/deg581/amundsen-isom/amundsen-setup/data/proc/amundsen_2.5km_v1.5_grd.nc' # grid file directory
-        f_ALL  = [f"/g/data/jk72/deg581/amundsen-isom/ana/proc/amundsen_IAF_his_monmean_{year:04d}.nc" for year in range(1992, 2016)]  #file list for model output, tweak filename format.
-#        f_ALL  = [f"/g/data/jk72/deg581/amundsen-isom/mdl/amundsen_IAF/roms_his_{year:04d}_monmean12.nc" for year in range(1, 2)]  #file list for model output, tweak filename format.
-        print(f_ALL)
-
-        if loading_method == 'interpolated':
-            print('using method that will average u,v points to rho points')
-            cache_file='oce_tempo.nc'
-            use_cache = True
-            if use_cache:
-                if not os.path.exists(cache_file):
-                    print("Cache not found, generating...", flush=True)
-                    oce = mp.load_oce_mod_roms_rho( files_M=f_grid, files_T=f_ALL, rho0=1026.0, teos10=False,out_nc=cache_file, save_to_netcdf=True)
-                print(f"Opening {cache_file}", flush=True)
-                oce = xr.open_dataset(cache_file)
-            else:
-                oce = mp.load_oce_mod_roms_rho( files_M=f_grid, files_T=f_ALL, rho0=1026.0, teos10=False)
-        elif loading_method == 'standard':
-            print('using method that will extract directly from u,v grid')
-            oce = mp.load_oce_mod_roms( files_M=f_grid, files_T=f_ALL, rho0=1026.0, teos10=False,out_nc='oce_tempo.nc', save_to_netcdf=True)
-            oce = xr.open_dataset('oce_tempo.nc')
-        else:
-            print('please choose loading method.')
+   oce = mp.load_oce_mod_roms( files_M=f_grid, files_T=f_ALL, rho0=1026.0, teos10=False )
 
 else:
 
@@ -164,7 +129,6 @@ else:
 
 #--------------------------------------------------------------------------
 # 2- Global attributes of output netcdf :
-print('def global attributes function',flush=True)
 
 def put_global_attrs(ds,experiment='TBD', avg_hor_res_73S=0.0, original_sim_name='TBD', ocean_model='TBD', institute='TBD', \
                      original_min_lat=-90.0, original_max_lat=90.0, original_min_lon=-180.0, original_max_lon=180.0):
@@ -228,7 +192,7 @@ def put_global_attrs(ds,experiment='TBD', avg_hor_res_73S=0.0, original_sim_name
 
 #--------------------------------------------------------------------------
 # 3a- Interpolate to common 3d grid :
-print('interpolate to common 3d grid',flush=True)
+
 
 # Characteristics of MISOMIP 3d grid:
 [lon_miso,lat_miso,dep_miso] = mp.generate_3d_grid_oce(region=reg)
@@ -303,13 +267,10 @@ tmp_LEVV = LEVOFV.interp(z=dep_miso)
 
 LEVOF_miso = np.zeros((mdep,mlat,mlon))
 for kk in np.arange(mdep):
-  print(f"\rDepth {kk+1}/{mdep} ({100*(kk+1)/mdep:.1f}%)",end="", flush=True)
   tzz = mp.horizontal_interp( latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, tmp_LEVT[kk,:] )
   tzz[ np.isnan(DOMMSK_miso) ] = np.nan # will update to missval at the end of the calculation
   LEVOF_miso[kk,:,:] = tzz
-print()
 
-print('begin vertical interp of fields',flush=True)
 # vertical interpolation of T, S, U, V to common vertical grid :
 
 tmpxS = LEVOFT*oce.SO
@@ -324,7 +285,6 @@ tmp_UX = tmpxU.interp(z=dep_miso) / tmp_LEVU
 tmpxV = LEVOFV*oce.VY
 tmp_VY = tmpxV.interp(z=dep_miso) / tmp_LEVV
 
-print('interpolation of time-varying fields',flush=True)
 #----- interpolation of time-varying fields:
 
 SO_miso     = np.zeros((mtime,mdep,mlat,mlon)) + missval
@@ -352,7 +312,6 @@ TAUVO_miso = np.zeros((mtime,mlat,mlon)) + missval
 domcond = (np.isnan(DOMMSK_miso))
 
 for ll in np.arange(mtime):
-  print(f"\r{ll+1}/{mtime}  Time: {datetime.now():%H:%M:%S}",end="", flush=True)
 
   ## fields interpolated from sea cells ( C/T grid ):
 
@@ -473,7 +432,7 @@ for ll in np.arange(mtime):
     tzz = VY_notrot * np.cos(theV) + UX_notrot * np.sin(theU) # rotated to meridional
     tzz[ condkk | (np.isnan(tzz)) ] = missval
     VO_miso[ll,kk,:,:] = tzz
-  print() 
+
 
 LEVOF_miso[ np.isnan(LEVOF_miso) ] = missval
 SFTFLF_miso[ np.isnan(SFTFLF_miso) | np.isnan(DOMMSK_miso) ] = missval 
@@ -481,7 +440,6 @@ SICONC_miso[ np.isnan(SICONC_miso) ] = missval
 DEPFLF_miso[ (DEPFLF_miso==0.e0) | np.isnan(DOMMSK_miso) ] = missval
 DEPTHO_miso[ np.isnan(DOMMSK_miso) | (DEPTHO_miso==0.) ] = missval
 
-print('making new xarray dataset',flush=True)
 #--------------------------------------------------------------------------
 # 3b- Create new xarray dataset and save to netcdf
 
