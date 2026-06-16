@@ -1,6 +1,5 @@
 # 2021-03 : Initial code [N. Jourdain, IGE-CNRS]
-# 2026-06 : Minor code edits to make more general for any roms grid 
-#           that is larger than the target grid.
+# 2026-06 : Updated to remap all u,v variables to rho grid [D. Gwyther, UTAS]
 #====================================================================================
 
 import numpy as np
@@ -11,14 +10,14 @@ from .interp_functions import calc_z
 from datetime import datetime
 
 #====================================================================================
-def load_oce_mod_roms(files_T='ROMS_all.nc',\
+def load_oce_mod_roms_rho(files_T='ROMS_all.nc',\
                       files_S='dummy',\
                       files_U='dummy',\
                       files_V='dummy',\
                       files_I='dummy',\
                       files_SRF='dummy',\
                       files_M='dummy',\
-                      rho0=1026.0, teos10=False, region='Amundsen', parallel=False ):
+                      rho0=1026.0, teos10=False, region='Amundsen', parallel=False, out_nc=None, save_to_netcdf=False):
    """ Read ROMS outputs and define an xarray dataset containing 
        all variables required in MISOMIP2. It automatically detects
        whether coordinates are stereographic or lon-lat.
@@ -223,13 +222,13 @@ def load_oce_mod_roms(files_T='ROMS_all.nc',\
      TAUX = ncU.utau
    elif ( "TAUX" in ncU.data_vars ):
      TAUX = ncU.TAUX
-   elif ( "sustr" in ncV.data_vars ):
+   elif ( "sustr" in ncU.data_vars ):
      TAUX = ncU.sustr
    else:
      print('    WARNING :   No data found for TAUX  -->  filled with NaNs')
      TAUX = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'eta_u', 'xi_u'] )
 
-   # surface stress received by the ocean along x [W m-1]
+   # surface stress received by the ocean along y [W m-1]
    if ( "vtau" in ncV.data_vars ):
      TAUY = ncV.vtau
    elif ( "TAUY" in ncV.data_vars ):
@@ -350,6 +349,87 @@ def load_oce_mod_roms(files_T='ROMS_all.nc',\
    else:
      print('    WARNING :   No data found for WFOATRLI  -->  filled with NaNs')
      WFOATRLI = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'eta_rho', 'xi_rho'] )
+
+
+   ###
+   #  Note: Remap all of the u,v quantities onto the rho grid
+   #        First define a helper function
+   ###
+
+   def u_to_rho(da):
+    """
+    Convert ROMS u-grid variable to rho-grid.
+    """
+
+    # interior average in xi direction
+    u_mid = 0.5 * (
+        da.isel(xi_u=slice(0, -1)) +
+        da.isel(xi_u=slice(1, None))
+    )
+
+    # pad to rho size in xi
+    u_pad = xr.concat(
+        [
+            da.isel(xi_u=0),   # left edge
+            u_mid,
+            da.isel(xi_u=-1)   # right edge
+        ],
+        dim="xi_u"
+    )
+
+    # rename dimensions to rho convention
+    u_pad = u_pad.rename({"xi_u": "xi_rho", "eta_u": "eta_rho"})
+
+    return u_pad
+
+   def v_to_rho(da):
+    """
+    Convert ROMS v-grid variable to rho-grid.
+    """
+
+    # interior average in eta direction
+    v_mid = 0.5 * (
+        da.isel(eta_v=slice(0, -1)) +
+        da.isel(eta_v=slice(1, None))
+    )
+
+    # pad to rho size in eta
+    v_pad = xr.concat(
+        [
+            da.isel(eta_v=0),   # bottom edge
+            v_mid,
+            da.isel(eta_v=-1)   # top edge
+        ],
+        dim="eta_v"
+    )
+
+    # rename to rho grid
+    v_pad = v_pad.rename({"xi_v": "xi_rho", "eta_v": "eta_rho"})
+
+    return v_pad
+
+   UX_rho = u_to_rho(UX)
+   VY_rho = v_to_rho(VY)
+
+   TAUX_rho = u_to_rho(TAUX)
+   TAUY_rho = v_to_rho(TAUY)
+
+   MSFTBAROT_rho = u_to_rho(MSFTBAROT)
+
+   DOMMSKU_rho = u_to_rho(DOMMSKU)
+   DOMMSKV_rho = v_to_rho(DOMMSKV)
+
+   lonU_rho = u_to_rho(lonU)
+   lonV_rho = v_to_rho(lonV)
+
+   latU_rho = u_to_rho(latU)
+   latV_rho = v_to_rho(latV)
+
+   thetaU_rho = u_to_rho(thetaU)
+   thetaV_rho = v_to_rho(thetaV)
+
+   mask_u_rho = u_to_rho(ncM.mask_u)
+   mask_v_rho = v_to_rho(ncM.mask_v)
   
    #----------
    # Reduce the size of ocean dataset
@@ -410,33 +490,46 @@ def load_oce_mod_roms(files_T='ROMS_all.nc',\
    DepTUV = xr.DataArray( newdepth, dims=['z'], coords=dict( z=(['z'], newdepth) ) )
    DEPTHOT = DEPTHO.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1))
    DEPFLFT = DEPFLF.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1))
-   DEPTHOU = xr.DataArray( 0.5 * (DEPTHOT.values+DEPTHOT.shift(xi_rho=1).values), dims=['eta_u', 'xi_u'] )
-   DEPFLFU = xr.DataArray( 0.5 * (DEPFLFT.values+DEPFLFT.shift(xi_rho=1).values), dims=['eta_u', 'xi_u'] )
-   DEPTHOV = xr.DataArray( 0.5 * (DEPTHOT.values+DEPTHOT.shift(eta_rho=1).values), dims=['eta_v', 'xi_v'] )
-   DEPFLFV = xr.DataArray( 0.5 * (DEPFLFT.values+DEPFLFT.shift(eta_rho=1).values), dims=['eta_v', 'xi_v'] )
+
+   ### 
+   #  Note: changed all dims to _rho, as the .shift() command doesn't actually subtract 1, so they are all still rho sized.
+   ###
+   DEPTHOU = xr.DataArray( 0.5 * (DEPTHOT.values+DEPTHOT.shift(xi_rho=1).values), dims=['eta_rho', 'xi_rho'] )
+   DEPFLFU = xr.DataArray( 0.5 * (DEPFLFT.values+DEPFLFT.shift(xi_rho=1).values), dims=['eta_rho', 'xi_rho'] )
+   DEPTHOV = xr.DataArray( 0.5 * (DEPTHOT.values+DEPTHOT.shift(eta_rho=1).values), dims=['eta_rho', 'xi_rho'] )
+   DEPFLFV = xr.DataArray( 0.5 * (DEPFLFT.values+DEPFLFT.shift(eta_rho=1).values), dims=['eta_rho', 'xi_rho'] )
+
+   ###
+   #  Note: Changed dims to _rho, and replaced *mask by the mask_u/v_rho version, so everything is rho sized.
+   ###
 
    LEVOFT = xr.DataArray( np.ones((mz,np.shape(ztmp)[1],np.shape(ztmp)[2]))*100., dims=['z', 'eta_rho', 'xi_rho'], coords=dict( z=(['z'], newdepth) ) )
    LEVOFT = LEVOFT.where( ( (DepTUV==0.) & (DEPFLFT==0.) ) | ( (DEPTHOT>DepTUV) & (DEPFLFT<DepTUV) ), 0.e0 ) \
             * ncM.mask_rho.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1))
-   LEVOFU = xr.DataArray( np.ones((mz,np.shape(ztmp)[1],np.shape(ztmp)[2]))*100., dims=['z', 'eta_u', 'xi_u'], coords=dict( z=(['z'], newdepth) ) )
+   LEVOFU = xr.DataArray( np.ones((mz,np.shape(ztmp)[1],np.shape(ztmp)[2]))*100., dims=['z', 'eta_rho', 'xi_rho'], coords=dict( z=(['z'], newdepth) ) )
    LEVOFU = LEVOFU.where( ( (DepTUV==0.) & (DEPFLFU==0.) ) | ( (DEPTHOU>DepTUV) & (DEPFLFU<DepTUV) ), 0.e0 ) \
-            * ncM.mask_u.isel(xi_u=slice(imin,imax+1),eta_u=slice(jmin,jmax+1))
-   LEVOFV = xr.DataArray( np.ones((mz,np.shape(ztmp)[1],np.shape(ztmp)[2]))*100., dims=['z', 'eta_v', 'xi_v'], coords=dict( z=(['z'], newdepth) ) )
+            * mask_u_rho.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1))
+   LEVOFV = xr.DataArray( np.ones((mz,np.shape(ztmp)[1],np.shape(ztmp)[2]))*100., dims=['z', 'eta_rho', 'xi_rho'], coords=dict( z=(['z'], newdepth) ) )
    LEVOFV = LEVOFV.where( ( (DepTUV==0.) & (DEPFLFV==0.) ) | ( (DEPTHOV>DepTUV) & (DEPFLFV<DepTUV) ), 0.e0 ) \
-            * ncM.mask_v.isel(xi_v=slice(imin,imax+1),eta_v=slice(jmin,jmax+1))
+            * mask_v_rho.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1))
+   ###
+   #  Note: ztmp has rho sized, so dims of ZMODU/V sould be rho sized too
+   ###
 
    ZMODT = xr.DataArray( ztmp, dims=['s_rho', 'eta_rho', 'xi_rho'] )
-   ZMODU = xr.DataArray( ztmp, dims=['s_rho', 'eta_u', 'xi_u'] )
-   ZMODV = xr.DataArray( ztmp, dims=['s_rho', 'eta_v', 'xi_v'] )
+   ZMODU = xr.DataArray( ztmp, dims=['s_rho', 'eta_rho', 'xi_rho'] )
+   ZMODV = xr.DataArray( ztmp, dims=['s_rho', 'eta_rho', 'xi_rho'] )
+
+   
    SO_red = SO.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1))
    THETAO_red = THETAO.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1))
-   UX_red = UX.isel(xi_u=slice(imin,imax+1),eta_u=slice(jmin,jmax+1))
-   VY_red = VY.isel(xi_v=slice(imin,imax+1),eta_v=slice(jmin,jmax+1))
+   UX_red = UX_rho.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1))
+   VY_red = VY_rho.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1))
    SO_z = np.zeros((mtime,mz,np.shape(ztmp)[1],np.shape(ztmp)[2]))
    THETAO_z = np.zeros((mtime,mz,np.shape(ztmp)[1],np.shape(ztmp)[2]))
    UX_z = np.zeros((mtime,mz,np.shape(ztmp)[1],np.shape(ztmp)[2]))
    VY_z = np.zeros((mtime,mz,np.shape(ztmp)[1],np.shape(ztmp)[2]))
-    
+
    import os, psutil
    nz = np.size(newdepth)
    for kk in np.arange(np.size(newdepth)):
@@ -477,11 +570,9 @@ def load_oce_mod_roms(files_T='ROMS_all.nc',\
      mskinfV = tmpbV.where( tmpbV==tmpbV.max('s_rho'), 0.e0 )
      mskinfV = mskinfV.where( mskinfV==0.e0, 1.e0 )
      dzinfV = -tmpbV.where( tmpbV==tmpbV.max('s_rho'), 0.e0 ).sum('s_rho')
-     
      # time varying 3d fields:
      for ll in np.arange(mtime):
         print(f"\rTime step {ll+1}/{mtime} ({100*(ll+1)/mtime:5.1f}%)", end="", flush=True)
-
         Saaa = msksupT*SO_red.isel(time=ll)
         Sbbb = mskinfT*SO_red.isel(time=ll)
         Sccc = ( Saaa.sum('s_rho')*dzinfT + Sbbb.sum('s_rho')*dzsupT ) / (dzinfT+dzsupT)
@@ -502,10 +593,24 @@ def load_oce_mod_roms(files_T='ROMS_all.nc',\
         Vccc = ( Vaaa.sum('s_rho')*dzinfV + Vbbb.sum('s_rho')*dzsupV ) / (dzinfV+dzsupV)
         VY_z[ll,kk,:,:] = Vccc.values
      print()
+   print()
 
    #----------
    # Create new xarray dataset including all useful variables:
    # reshaping (x,y) as 1-dimensional (sxy)
+   def mem():
+    rss_gb = psutil.Process(os.getpid()).memory_info().rss / 1024**3
+    print(f"RSS = {rss_gb:.1f} GB", flush=True)
+   
+   print("Before Dataset")
+   mem()
+   print("ABOUT TO BUILD DATASET")
+
+   print("SO_z:", SO_z.nbytes / 1024**3, "GB")
+   print("THETAO_z:", THETAO_z.nbytes / 1024**3, "GB")
+   print("UX_z:", UX_z.nbytes / 1024**3, "GB")
+   print("VY_z:", VY_z.nbytes / 1024**3, "GB")
+   print("SUM:", (SO_z.nbytes + THETAO_z.nbytes + UX_z.nbytes + VY_z.nbytes)/1024**3)
 
    nxy=(jmax-jmin+1)*(imax-imin+1)
 
@@ -515,8 +620,8 @@ def load_oce_mod_roms(files_T='ROMS_all.nc',\
        "THETAO":    (["time", "z", "sxy"], np.reshape( THETAO_z, (mtime,mz,nxy)) ),
        "UX":        (["time", "z", "sxy"], np.reshape( UX_z, (mtime,mz,nxy)) ),
        "VY":        (["time", "z", "sxy"], np.reshape( VY_z, (mtime,mz,nxy)) ),
-       "TAUX":      (["time", "sxy"], np.reshape( TAUX.isel(xi_u=slice(imin,imax+1),eta_u=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
-       "TAUY":      (["time", "sxy"], np.reshape( TAUY.isel(xi_v=slice(imin,imax+1),eta_v=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
+       "TAUX":      (["time", "sxy"], np.reshape( TAUX_rho.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
+       "TAUY":      (["time", "sxy"], np.reshape( TAUY_rho.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "ZOS":       (["time", "sxy"], np.reshape( ZOS.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "TOB":       (["time", "sxy"], np.reshape( TOB.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "SOB":       (["time", "sxy"], np.reshape( SOB.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
@@ -524,7 +629,7 @@ def load_oce_mod_roms(files_T='ROMS_all.nc',\
        "DYDRFLF":   (["time", "sxy"], np.reshape( DYDRFLF.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "THDRFLF":   (["time", "sxy"], np.reshape( THDRFLF.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "HADRFLF":   (["time", "sxy"], np.reshape( HADRFLF.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
-       "MSFTBAROT": (["time", "sxy"], np.reshape( MSFTBAROT.isel(xi_u=slice(imin,imax+1),eta_u=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
+       "MSFTBAROT": (["time", "sxy"], np.reshape( MSFTBAROT_rho.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "HFDS":      (["time", "sxy"], np.reshape( HFDS.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "WFOATRLI":  (["time", "sxy"], np.reshape( WFOATRLI.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "WFOSICOR":  (["time", "sxy"], np.reshape( WFOSICOR.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
@@ -539,19 +644,19 @@ def load_oce_mod_roms(files_T='ROMS_all.nc',\
        "DEPFLF":    (["sxy"], np.reshape( DEPFLF.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, nxy) ),
        "DEPTHO":    (["sxy"], np.reshape( DEPTHO.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, nxy) ),
        "DOMMSKT":   (["sxy"], np.reshape( DOMMSKT.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, nxy) ),
-       "DOMMSKU":   (["sxy"], np.reshape( DOMMSKU.isel(xi_u=slice(imin,imax+1),eta_u=slice(jmin,jmax+1)).values, nxy) ),
-       "DOMMSKV":   (["sxy"], np.reshape( DOMMSKV.isel(xi_v=slice(imin,imax+1),eta_v=slice(jmin,jmax+1)).values, nxy) ),
+       "DOMMSKU":   (["sxy"], np.reshape( DOMMSKU_rho.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, nxy) ),
+       "DOMMSKV":   (["sxy"], np.reshape( DOMMSKV_rho.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, nxy) ),
        "lonT":      (["sxy"], np.reshape( lonT.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, nxy) ),
-       "lonU":      (["sxy"], np.reshape( lonU.isel(xi_u=slice(imin,imax+1),eta_u=slice(jmin,jmax+1)).values, nxy) ),
-       "lonV":      (["sxy"], np.reshape( lonV.isel(xi_v=slice(imin,imax+1),eta_v=slice(jmin,jmax+1)).values, nxy) ),
+       "lonU":      (["sxy"], np.reshape( lonU_rho.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, nxy) ),
+       "lonV":      (["sxy"], np.reshape( lonV_rho.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, nxy) ),
        "latT":      (["sxy"], np.reshape( latT.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, nxy) ),
-       "latU":      (["sxy"], np.reshape( latU.isel(xi_u=slice(imin,imax+1),eta_u=slice(jmin,jmax+1)).values, nxy) ),
-       "latV":      (["sxy"], np.reshape( latV.isel(xi_v=slice(imin,imax+1),eta_v=slice(jmin,jmax+1)).values, nxy) ),
+       "latU":      (["sxy"], np.reshape( latU_rho.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, nxy) ),
+       "latV":      (["sxy"], np.reshape( latV_rho.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, nxy) ),
        "dxT":       (["sxy"], np.reshape( dxT.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, nxy) ),
        "dyT":       (["sxy"], np.reshape( dyT.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, nxy) ),
        "thetaT":    (["sxy"], np.reshape( thetaT.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, nxy) ),
-       "thetaU":    (["sxy"], np.reshape( thetaU.isel(xi_u=slice(imin,imax+1),eta_u=slice(jmin,jmax+1)).values, nxy) ),
-       "thetaV":    (["sxy"], np.reshape( thetaV.isel(xi_v=slice(imin,imax+1),eta_v=slice(jmin,jmax+1)).values, nxy) ),
+       "thetaU":    (["sxy"], np.reshape( thetaU_rho.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, nxy) ),
+       "thetaV":    (["sxy"], np.reshape( thetaV_rho.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, nxy) ),
        "depTUV":    (['z'], newdepth)
       },
       coords={
@@ -565,7 +670,14 @@ def load_oce_mod_roms(files_T='ROMS_all.nc',\
       "original_maxlon": domain_maxlon
       },
    )
+   print("After Dataset")
+   mem()
+   print('    Load duration: ',datetime.now() - startTime, flush=True)
 
-   print('    Load duration: ',datetime.now() - startTime)
+   if save_to_netcdf:
+        print("Writing dataset to netCDF at "+str(datetime.now()), flush=True)
+        ds.to_netcdf(out_nc, mode="w")
+        print("Finished writing netCDF at "+str(datetime.now()), flush=True)
+        return None
 
    return ds

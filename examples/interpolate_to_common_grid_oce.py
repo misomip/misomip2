@@ -117,11 +117,42 @@ elif ( test_case[0:4] == 'ROMS' ):
    exp='Ocean-A1'           # MISOMIP2 experiment name (e.g., Ocean-A1, Ocean-W1, IceOcean-A1...)
    original_sim_name='random cirum-Antarctic test case'
 
-   print('LOADING ROMS...')
-   f_grid = data_dir+'/ROMS_test_grid.nc'
-   f_ALL  = [data_dir+'/'+test_case+'_m0'+month.astype('str')+'.nc' for month in np.arange(1,4)]
+   loading_method = 'interpolated'  # options: 'interpolated' or 'standard'
+                                    # 'interpolated' moves all of the u,v fields to the rho grid
+                                    # 'standard' subsets the u,v grid in the same way as the rho grid. <-- Note that this will
+                                    #  fail for a model grid that is not larger than the misomip2 target grid.
 
-   oce = mp.load_oce_mod_roms( files_M=f_grid, files_T=f_ALL, rho0=1026.0, teos10=False )
+   if test_case == 'ROMS_test':
+        print('LOADING ROMS test data from WAOM (Richter et al)...')
+        f_grid = data_dir+'/ROMS_test_grid.nc'
+        f_ALL  = [data_dir+'/'+test_case+'_m0'+month.astype('str')+'.nc' for month in np.arange(1,4)]
+
+        oce = mp.load_oce_mod_roms( files_M=f_grid, files_T=f_ALL, rho0=1026.0, teos10=False )
+
+   elif test_case == 'ROMS-UTAS':
+        data_dir='/g/data/jk72/deg581/amundsen-isom/mdl/amundsen_IAF/'   # set directory of output data
+        f_grid = '/g/data/jk72/deg581/amundsen-isom/amundsen-setup/data/proc/amundsen_2.5km_v1.5_grd.nc' # grid file directory
+        f_ALL  = [f"/g/data/jk72/deg581/amundsen-isom/ana/proc/amundsen_IAF_his_monmean_{year:04d}.nc" for year in range(1992, 2016)]  #file list for model output
+        print(f_ALL)
+
+        if loading_method == 'interpolated':
+            print('using method that will average u,v points to rho points')
+            cache_file='oce_tempo.nc'
+            use_cache = True
+            if use_cache:
+                if not os.path.exists(cache_file):
+                    print("Cache not found, generating...", flush=True)
+                    oce = mp.load_oce_mod_roms_rho( files_M=f_grid, files_T=f_ALL, rho0=1026.0, teos10=False,out_nc=cache_file, save_to_netcdf=True)
+                print(f"Opening {cache_file}", flush=True)
+                oce = xr.open_dataset(cache_file)
+            else:
+                oce = mp.load_oce_mod_roms_rho( files_M=f_grid, files_T=f_ALL, rho0=1026.0, teos10=False)
+        elif loading_method == 'standard':
+            print('using method that will extract directly from u,v grid')
+            oce = mp.load_oce_mod_roms( files_M=f_grid, files_T=f_ALL, rho0=1026.0, teos10=False,out_nc='oce_tempo.nc', save_to_netcdf=True)
+            oce = xr.open_dataset('oce_tempo.nc')
+        else:
+            print('please choose loading method.')
 
 else:
 
