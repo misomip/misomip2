@@ -28,6 +28,19 @@ startTime = datetime.now()
 np.seterr(divide='ignore', invalid='ignore') # to avoid warning due to divide by zero
 
 #--------------------------------------------------------------------------
+# Function to manage script arguments
+#--------------------------------------------------------------------------
+def load_arguments():
+    parser = argparse.ArgumentParser(description="Process ISOMIP2 data.")
+    parser.add_argument("--config"  , type=str, default='test_cases/oce/NEMO_test.yml', help="Path to YAML configuration file (optional).")
+
+# may be useful for production of the full simulation set
+#    parser.add_argument("--yearb"   , type=int, default=None, help="start year")
+#    parser.add_argument("--yeare"   , type=int, default=None, help="end year")
+    
+    return parser.parse_args()
+
+#--------------------------------------------------------------------------
 # Function to define global attributes of output netcdf :
 #--------------------------------------------------------------------------
 def put_global_attrs(ds, experiment='TBD', avg_hor_res_73S=0.0, original_sim_name='TBD', ocean_model='TBD', institute='TBD', \
@@ -48,19 +61,6 @@ def put_global_attrs(ds, experiment='TBD', avg_hor_res_73S=0.0, original_sim_nam
    ds.attrs['original_max_lat']     = original_max_lat    # Minimum latitude of the original domain in [-90:90]
    ds.attrs['original_min_lon']     = original_min_lon    # Minimum longitude of the original domain in [-180:180]
    ds.attrs['original_max_lon']     = original_max_lon    # Minimum longitude of the original domain in [-180:180]
-
-#--------------------------------------------------------------------------
-# Function to manage script arguments
-#--------------------------------------------------------------------------
-def load_arguments():
-    parser = argparse.ArgumentParser(description="Process ISOMIP2 data.")
-    parser.add_argument("--config"  , type=str, default='test_cases/oce/NEMO_test.yml', help="Path to YAML configuration file (optional).")
-
-# may be useful for production of the full simulation set
-#    parser.add_argument("--yearb"   , type=int, default=None, help="start year")
-#    parser.add_argument("--yeare"   , type=int, default=None, help="end year")
-    
-    return parser.parse_args()
 
 #--------------------------------------------------------------------------
 # Function to load yaml file
