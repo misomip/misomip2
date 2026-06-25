@@ -58,15 +58,8 @@ The first thing to change in this file is the directory in which the misomip2 pa
 ```python
 sys.path.append("/Users/jourdain/MY_PACKAGES")
 ```
-The second thing is to choose the test case you want to run by uncommenting one of these lines:
-```python
-test_case='NEMO_test'
-#test_case='MITGCM_test'
-#test_case='ROMS_test'
-#test_case='eORCA025_test'
-```
+The second thing is to choose the test case you want to run (among NEMO, eORCA025, MITGCM and ROMS).
 We recommend starting with 'NEMO_test' which is the smallest in size and fastest to run.
-
 To make it work, you need to download the input files for the tes cases, which are all provided on [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4709851.svg)](https://doi.org/10.5281/zenodo.4709851). You can get the files directly using wget as:
 ```bash
 cd test_cases/oce
@@ -87,10 +80,12 @@ wget https://zenodo.org/record/4709851/files/ROMS_test.zip
 unzip ROMS_test.zip && rm ROMS_test.zip
 ```
 
-Then, execute the script as follows:
+Then, execute the script as follows using the yaml card of the selected test case:
 ```bash
-python interpolate_to_common_grid_oce.py
+python interpolate_to_common_grid_oce.py --config test_cases/oce/NEMO_config.yml
 ```
+The default value is ```test_cases/oce/NEMO_config.yml```
+
 This should create the following files (here for NEMO and section 1 and mooring 2):
 * Oce3d\_NEMO3.6-IGE-CNRS-UGA\_a\_Ocean-A1\_201001-201002.nc
 * OceSec1\_NEMO3.6-IGE-CNRS-UGA\_a\_Ocean-A1\_201001-201002.nc
@@ -104,7 +99,7 @@ On a laptop (16Gb, 2GHz), the test cases took the following durations:
 
 ### Adapt to your own ocean configuration
 
-You can copy interpolate_to_common_grid_oce.py and adapt it to your model. You need to adapt at least section 0 (General information), section 1 (Files and variables) and section 2 (Global attributes of output netcdf). For section 1, you may need to create or modify a load\_oce\_mod\_xxxx.py function similar to the one existing for NEMO, MITgcm and ROMS if your model is not covered yet. If your model is already covered but variable names differ from what is understood by load\_oce\_mod\_xxxx.py, just add options for these variables in load\_oce\_mod\_xxxx.py and [make a pull request](https://opensource.com/article/19/7/create-pull-request-github) to upload it onto the official misomip2 repository (so that you keep this in case of updates).
+You can copy interpolate_to_common_grid_oce.py and adapt it to your model. You need to adapt at least the yml card to fit your simulation, and section 3a (Files and variables). The yml card define what regions you want to process (*processing*), the simulation description (*simulation*) and the output metadata (*metadata*). In section 3a, you may need to create or modify a load\_oce\_mod\_xxxx.py function similar to the one existing for NEMO, MITgcm and ROMS if your model is not covered yet. If your model is already covered but variable names differ from what is understood by load\_oce\_mod\_xxxx.py, just add options for these variables in load\_oce\_mod\_xxxx.py and [make a pull request](https://opensource.com/article/19/7/create-pull-request-github) to upload it onto the official misomip2 repository (so that you keep this in case of updates).
 
 ### Performance of ocean interpolation
 
