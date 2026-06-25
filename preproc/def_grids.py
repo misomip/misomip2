@@ -354,15 +354,23 @@ def generate_mooring_grid_oce(region='Amundsen',mooring=1):
    elif ( region == 'Weddell' ) & ( mooring == 4 ): # site 5
      longitude=np.array([ -54.71 ])
      latitude=np.array([ -80.29 ])
-     depth=np.array([  ])
+     depth=np.arange(0.,1160.,10.)
    elif ( region == 'Weddell' ) & ( mooring == 5 ): # FSW
      longitude=np.array([ -44.43 ])
      latitude=np.array([ -80.44 ])
-     depth=np.array([  ])
+     depth=np.arange(0.,1160.,10.)
    elif ( region == 'Weddell' ) & ( mooring == 6 ): # FSE
      longitude=np.array([ -40.83 ])
      latitude=np.array([ -81.08 ])
-     depth=np.array([  ])
+     depth=np.arange(0.,1160.,10.)
+   elif ( region == 'Weddell' ) & ( mooring == 7 ): # ???
+     longitude=np.array([ -37.26 ])
+     latitude=np.array([ -78.54 ])
+     depth=np.arange(0.,1160.,10.)
+   elif ( region == 'Weddell' ) & ( mooring == 8 ): # ???
+     longitude=np.array([ -38.09 ])
+     latitude=np.array([ -78.56 ])
+     depth=np.arange(0.,1160.,10.)
    elif ( region == 'Weddell' ):
      sys.exit("~!@#$%^* error : mooring number not defined for Weddell")
    else:
