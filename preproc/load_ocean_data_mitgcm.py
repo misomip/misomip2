@@ -102,11 +102,6 @@ def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
       latU = ncM.YC
       lonV = ncM.XC
       latV = ncM.YG
-      if 'YC' not in lonT.dims:
-         # 1D arrays: broadcast to 2D
-         latT, lonT = xr.broadcast(latT, lonT)
-         latU, lonU = xr.broadcast(latU, lonU)
-         latV, lonV = xr.broadcast(latV, lonV)
       # Put longitude in the range (-180, 180)
       def fix_lon_range(lon):
          lon = xr.where(lon >= 180, lon-360, lon)
@@ -115,6 +110,11 @@ def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
       lonT = fix_lon_range(lonT)
       lonU = fix_lon_range(lonU)
       lonV = fix_lon_range(lonV)
+      if 'YC' not in lonT.dims:
+         # 1D arrays: broadcast to 2D
+         latT, lonT = xr.broadcast(latT, lonT)
+         latU, lonU = xr.broadcast(latU, lonU)
+         latV, lonV = xr.broadcast(latV, lonV)
 
    # save original domain boundaries:
    domain_minlat = latT.min().values
@@ -361,6 +361,9 @@ def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
    if ( "siconc" in ncI.data_vars ):
      SICONC = ncI.siconc*100.0
      SICONC = SICONC.where( (~np.isnan(SICONC)) & (~np.isinf(SICONC)), 0.e0 )
+   elif ( "SIarea" in ncI.data_vars ):
+      SICONC = ncI.SIarea*100.0
+      SICONC = SICONC.where( (~np.isnan(SICONC)) & (~np.isinf(SICONC)), 0.e0 )
    else:
      print('    WARNING :   No data found for SICONC  -->  filled with NaNs')
      SICONC = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'YC', 'XC'] )   
@@ -370,6 +373,8 @@ def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
      SIVOL = ncI.sivolu
    elif ( "sivol" in ncI.data_vars ):
      SIVOL = ncI.sivol
+   elif ( "SIheff" in ncI.data_vars ):
+      SIVOL = ncI.SIheff
    else:
      print('    WARNING :   No data found for SIVOL  -->  filled with NaNs')
      SIVOL = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'YC', 'XC'] )
@@ -379,6 +384,8 @@ def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
      SIUX = ncI.sivelu
    elif ("siu" in ncI.data_vars ):
      SIUX = ncI.siu
+   elif ("SIuice" in ncI.data_vars ):
+      SIUX = ncI.SIuice
    else:
      print('    WARNING :   No data found for SIUX  -->  filled with NaNs')
      SIUX = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'YC', 'XC'] )
@@ -388,6 +395,8 @@ def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
      SIVY = ncI.sivelv
    elif ("siv" in ncI.data_vars ):
      SIVY = ncI.siv
+   elif ("SIvice" in ncI.data_vars ):
+      SIVY = ncI.SIvice
    else:
      print('    WARNING :   No data found for SIUY  -->  filled with NaNs')
      SIVY = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'YC', 'XC'] )
@@ -396,18 +405,22 @@ def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
    # see Griffies et al. (2016, section K4-K5) NB: here, including correction if any unlike Griffies (to avoid 2 variables)
    if ( "qt_oce" in ncSRF.data_vars ):
      HFDS = ncSRF.qt_oce
+   elif ("oceQnet" in ncSRF.data_vars ):
+      HFDS = ncSRF.oceQnet
    else:
      print('    WARNING :   No data found for HFDS  -->  filled with NaNs')
      HFDS = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'YC', 'XC'] )
 
    # Water flux entering the ocean due to sea-ice (melting-freezing) and surface correction (SSS restoring)
-   # (= fsitherm + wfocorr in Griffies 2016 section K2) [kg m-2 s-1]
+   # (= fsitherm + wfocorr in Griffies 2016 section K2) [kg m-2 s-1]      
    if ( "wfocorr" in ncSRF.data_vars ):
      WFOCORR = - ncSRF.wfocorr
    else:
      WFOCORR = xr.DataArray( np.zeros((mtime,my,mx)), dims=['time', 'YC', 'XC'] )
    if ( "fsitherm" in ncSRF.data_vars ):
      WFOSICOR = WFOCORR - ncSRF.fsitherm
+   elif ("SIfwmelt" in ncSRF.data_vars and "SIfwfrz" in ncSRF.data_vars):
+      WFOSICOR = WFOCORR - ncSRF.SIfwmelt - ncSRF.SIfwfrz
    else:
      print('    WARNING :   No data found for WFOSICOR  -->  filled with NaNs')
      WFOSICOR = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'YC', 'XC'] )
@@ -417,6 +430,8 @@ def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
    # (= pr+prs+evs+ficeberg+friver+ficeshelf in Griffies 2016, section K2)
    if ( "empmr" in ncSRF.data_vars ):
      WFOATRLI = - ncSRF.empmr + FICESHELF
+   elif ("oceFWflx" in ncSRF.data_vars and "SIfwmelt" in ncSRF.data_vars and "SIfwfrz" in ncSRF.data_vars):
+      WFOATRLI = ncSRF.oceFWflx - ncSRF.SIfwmelt - ncSRF.SIfwfrz
    else:
      print('    WARNING :   No data found for WFOATRLI  -->  filled with NaNs')
      WFOATRLI = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'YC', 'XC'] )
