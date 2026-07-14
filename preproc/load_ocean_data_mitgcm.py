@@ -66,6 +66,7 @@ def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
    if ( files_SRF == 'dummy' ):
       files_SRF = files_T
    if ( files_M == 'dummy' ):
+      print('Warning: files_M not set; defaulting to files_T. This can lead to time-dependent grid variables and OOM issues. Consider passing a single file to files_M instead.')
       files_M = files_T
 
    ncT = xr.open_mfdataset(files_T, decode_coords=False, parallel=parallel)
@@ -98,9 +99,22 @@ def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
       lonT = ncM.XC
       latT = ncM.YC
       lonU = ncM.XG
-      latU = ncM.XC
+      latU = ncM.YC
       lonV = ncM.XC
       latV = ncM.YG
+      if 'YC' not in lonT.dims:
+         # 1D arrays: broadcast to 2D
+         latT, lonT = xr.broadcast(latT, lonT)
+         latU, lonU = xr.broadcast(latU, lonU)
+         latV, lonV = xr.broadcast(latV, lonV)
+      # Put longitude in the range (-180, 180)
+      def fix_lon_range(lon):
+         lon = xr.where(lon >= 180, lon-360, lon)
+         lon = xr.where(lon < -180, lon+360, lon)
+         return lon
+      lonT = fix_lon_range(lonT)
+      lonU = fix_lon_range(lonU)
+      lonV = fix_lon_range(lonV)
 
    # save original domain boundaries:
    domain_minlat = latT.min().values
