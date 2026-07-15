@@ -7,7 +7,6 @@ import gsw
 from pyproj import Proj
 from .def_grids import grid_bounds_oce
 from datetime import datetime
-import subprocess
 
 #====================================================================================
 def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
@@ -17,7 +16,7 @@ def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
                         files_I='dummy',\
                         files_SRF='dummy',\
                         files_M='dummy',\
-                        rho0=1026.0, teos10=False, region='Amundsen', parallel=False ):
+                        rho0=1026.0, teos10=False, region='Amundsen', parallel=False, projection=None ):
    """ Read MITgcm outputs and define an xarray dataset containing 
        all variables required in MISOMIP2. It automatically detects
        whether coordinates are stereographic or lon-lat.
@@ -39,6 +38,8 @@ def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
              =True  -> assumes the nemo outputs are in CT and AS and convert to PT and PS
         
        parallel: If True, the open and preprocess steps of this function will be performed in parallel
+
+       projection: 'lat_lon', 'polar_stereo', or None (default; code will guess)
 
        Output:
           xarray dataset of coordinates ("time", "z", "sxy") (sxy= one-dimensionalized horizontal space)
@@ -67,7 +68,6 @@ def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
    if ( files_SRF == 'dummy' ):
       files_SRF = files_T
    if ( files_M == 'dummy' ):
-      print('Warning: files_M not set; defaulting to files_T. This can lead to time-dependent grid variables and OOM issues. Consider passing a single file to files_M instead.')
       files_M = files_T
 
    ncT = xr.open_mfdataset(files_T, decode_coords=False, parallel=parallel)
@@ -80,9 +80,17 @@ def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
 
    mtime = ncT.time.shape[0]
 
+   if projection is None:
+      if ( ( ncM.XC.min() < -180.1 ) | ( ncM.XC.max() > 360.1 ) ):
+         print('    !!! Assuming that (XC,YC) are stereographic coordinates (EPSG:3031) !!!')
+         projection = 'polar_stereo'
+      else:
+         print('    !!! Assuming that (XC,YC) are (longitude,latitude) !!!')
+         projection = 'lat_lon'
+         
+
    # longitude & latitude on U, V, T grids
-   if ( ( ncM.XC.min() < -180.1 ) | ( ncM.XC.max() > 360.1 ) ):
-      print('    !!! Assuming that (XC,YC) are stereographic coordinates (EPSG:3031) !!!')
+   if projection == 'polar_stereo':
       p = Proj('+init=EPSG:3031')
       XC2d, YC2d = np.meshgrid( ncM.XC.values, ncM.YC.values )
       XG2d, YG2d = np.meshgrid( ncM.XG.values, ncM.YG.values )
@@ -95,8 +103,7 @@ def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
       lons, lats = p(XC2d, YG2d, inverse=True)
       lonV = xr.DataArray( lons, dims=['YG', 'XC'] )
       latV = xr.DataArray( lats, dims=['YG', 'XC'] )
-   else:
-      print('    !!! Assuming that (XC,YC) are (longitude,latitude) !!!')
+   elif projection == 'lat_lon':      
       lonT = ncM.XC
       latT = ncM.YC
       lonU = ncM.XG
@@ -116,6 +123,8 @@ def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
          latT, lonT = xr.broadcast(latT, lonT)
          latU, lonU = xr.broadcast(latU, lonU)
          latV, lonV = xr.broadcast(latV, lonV)
+   else:
+      raise Exception('Invalid projection '+projection)
 
    # save original domain boundaries:
    domain_minlat = latT.min().values
