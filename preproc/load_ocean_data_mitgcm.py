@@ -7,6 +7,7 @@ import gsw
 from pyproj import Proj
 from .def_grids import grid_bounds_oce
 from datetime import datetime
+import subprocess
 
 #====================================================================================
 def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
@@ -188,7 +189,7 @@ def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
      DEPFLF = ncT.ice_shelf_draft
    else:
      dz = xr.DataArray( ncM.Zl.values-ncM.Zu.values, dims=['Z'] )
-     DEPFLF = DEPTHO - dz.dot(ncM.hFacC) 
+     DEPFLF = DEPTHO - dz.dot(ncM.hFacC)
 
    # ocean temperature [degC]
    isTT=True
@@ -388,7 +389,7 @@ def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
       SIUX = ncI.SIuice
    else:
      print('    WARNING :   No data found for SIUX  -->  filled with NaNs')
-     SIUX = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'YC', 'XC'] )
+     SIUX = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'YC', 'XG'] )
 
    # sea-ice y-ward velocity [m/s]
    if ( "sivelv" in ncI.data_vars ):
@@ -399,7 +400,7 @@ def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
       SIVY = ncI.SIvice
    else:
      print('    WARNING :   No data found for SIUY  -->  filled with NaNs')
-     SIVY = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'YC', 'XC'] )
+     SIVY = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'YG', 'XC'] )
 
    # Total heat flux received by the ocean surface (including ice-shelf/ocean interface) [W m-2] 
    # see Griffies et al. (2016, section K4-K5) NB: here, including correction if any unlike Griffies (to avoid 2 variables)
@@ -421,6 +422,8 @@ def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
      WFOSICOR = WFOCORR - ncSRF.fsitherm
    elif ("SIfwmelt" in ncSRF.data_vars and "SIfwfrz" in ncSRF.data_vars):
       WFOSICOR = WFOCORR - ncSRF.SIfwmelt - ncSRF.SIfwfrz
+   elif ("SIdHbOCN" in ncSRF.data_vars and "SIdHbATC" in ncSRF.data_vars and "SIdHbATO" in ncSRF.data_vars and "SIdHbFLO" in ncSRF.data_vars):
+      WFOSICOR = WFOCORR - ncSRF.SIdHbOCN - ncSRF.SIdHbATC - ncSRF.SIdHbATO - ncSRF.SIdHbFLO
    else:
      print('    WARNING :   No data found for WFOSICOR  -->  filled with NaNs')
      WFOSICOR = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'YC', 'XC'] )
@@ -432,6 +435,8 @@ def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
      WFOATRLI = - ncSRF.empmr + FICESHELF
    elif ("oceFWflx" in ncSRF.data_vars and "SIfwmelt" in ncSRF.data_vars and "SIfwfrz" in ncSRF.data_vars):
       WFOATRLI = ncSRF.oceFWflx - ncSRF.SIfwmelt - ncSRF.SIfwfrz
+   elif ("SIempmr" in ncSRF.data_vars and "SIdHbOCN" in ncSRF.data_vars and "SIdHbATC" in ncSRF.data_vars and "SIdHbATO" in ncSRF.data_vars and "SIdHbFLO" in ncSRF.data_vars):
+      WFOATRLI = -ncSRF.SIempmr - ncSRF.SIdHbOCN - ncSRF.SIdHbATC - ncSRF.SIdHbATO - ncSRF.SIdHbFLO
    else:
      print('    WARNING :   No data found for WFOATRLI  -->  filled with NaNs')
      WFOATRLI = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'YC', 'XC'] )
@@ -511,8 +516,8 @@ def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
        "WFOSICOR":  (["time", "sxy"], np.reshape( WFOSICOR.isel(XC=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "SICONC":    (["time", "sxy"], np.reshape( SICONC.isel(XC=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "SIVOL":     (["time", "sxy"], np.reshape( SIVOL.isel(XC=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
-       "SIUX":      (["time", "sxy"], np.reshape( SIUX.isel(XC=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
-       "SIVY":      (["time", "sxy"], np.reshape( SIVY.isel(XC=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
+       "SIUX":      (["time", "sxy"], np.reshape( SIUX.isel(XG=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
+       "SIVY":      (["time", "sxy"], np.reshape( SIVY.isel(XC=slice(imin,imax+1),YG=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "LEVOFT":    (["z", "sxy"], np.reshape( LEVOFT.isel(XC=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, (mz,nxy)) ),
        "LEVOFU":    (["z", "sxy"], np.reshape( LEVOFU.isel(XG=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, (mz,nxy)) ),
        "LEVOFV":    (["z", "sxy"], np.reshape( LEVOFV.isel(XC=slice(imin,imax+1),YG=slice(jmin,jmax+1)).values, (mz,nxy)) ),
