@@ -430,9 +430,9 @@ def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
    if ( "fsitherm" in ncSRF.data_vars ):
      WFOSICOR = WFOCORR - ncSRF.fsitherm
    elif ("SIfwmelt" in ncSRF.data_vars and "SIfwfrz" in ncSRF.data_vars):
-      WFOSICOR = WFOCORR - ncSRF.SIfwmelt - ncSRF.SIfwfrz
+      WFOSICOR = WFOCORR + ncSRF.SIfwmelt + ncSRF.SIfwfrz
    elif ("SIdHbOCN" in ncSRF.data_vars and "SIdHbATC" in ncSRF.data_vars and "SIdHbATO" in ncSRF.data_vars and "SIdHbFLO" in ncSRF.data_vars):
-      WFOSICOR = WFOCORR - ncSRF.SIdHbOCN - ncSRF.SIdHbATC - ncSRF.SIdHbATO - ncSRF.SIdHbFLO
+      WFOSICOR = WFOCORR - (ncSRF.SIdHbOCN + ncSRF.SIdHbATC + ncSRF.SIdHbATO + ncSRF.SIdHbFLO)*1e3
    else:
      print('    WARNING :   No data found for WFOSICOR  -->  filled with NaNs')
      WFOSICOR = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'YC', 'XC'] )
@@ -442,10 +442,6 @@ def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
    # (= pr+prs+evs+ficeberg+friver+ficeshelf in Griffies 2016, section K2)
    if ( "empmr" in ncSRF.data_vars ):
      WFOATRLI = - ncSRF.empmr + FICESHELF
-   elif ("oceFWflx" in ncSRF.data_vars and "SIfwmelt" in ncSRF.data_vars and "SIfwfrz" in ncSRF.data_vars):
-      WFOATRLI = ncSRF.oceFWflx - ncSRF.SIfwmelt - ncSRF.SIfwfrz
-   elif ("SIempmr" in ncSRF.data_vars and "SIdHbOCN" in ncSRF.data_vars and "SIdHbATC" in ncSRF.data_vars and "SIdHbATO" in ncSRF.data_vars and "SIdHbFLO" in ncSRF.data_vars):
-      WFOATRLI = -ncSRF.SIempmr - ncSRF.SIdHbOCN - ncSRF.SIdHbATC - ncSRF.SIdHbATO - ncSRF.SIdHbFLO
    else:
      print('    WARNING :   No data found for WFOATRLI  -->  filled with NaNs')
      WFOATRLI = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'YC', 'XC'] )
