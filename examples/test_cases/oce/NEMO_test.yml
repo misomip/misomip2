@@ -1,0 +1,67 @@
+processing:
+  #'Amundsen' and, or 'Weddell'
+  Amundsen:
+    name: 'A'                   # 'A' for Amundsen and 'W' for Weddell
+    sections: [2]               # 2 is broken # section number (1,2 for Amundsen, 1,2,3 for Weddel). Need to be the same lenght as regions.
+    moorings: [1,3,5]           # mooring number ([1:8] for Amundsen and [1:6] for Weddell). Need to be the same lenght as regions.
+
+simulation:
+# General settings for ISOMIP2 data processing
+  test_case: "NEMO_test"  # Choose between NEMO_test, MITGCM_test, ROMS_test, or eORCA025_test
+
+# Directory where data is stored (supports placeholders like {test_case})
+  data_dir: "test_cases/oce/NEMO_test"
+
+# Model-specific configurations
+  model: "NEMO3.6"        # Model name and version
+  original_sim_name: "random Amundsen test case"  # Description of the simulation
+
+# Metadata for the experiment
+  institute: "IGE-CNRS-UGA"  # Institute name (use "-" for multiple entities)
+  abc: "a"                   # Single letter to distinguish setups
+  exp: "Ocean-{regname}1"    # MISOMIP2 experiment name (e.g., Ocean-A1, Ocean-W1); {regname} is a placeholder for 'name'
+
+metadata:
+  project: "MISOMIP2"
+  contact: "TBD <tbd@misomip2.com>"           # Name(s) of the person(s) who produced the simulation <email>
+  computing_facility: "TBD"                   # Computing center where the simulation was run
+  interpolation_method: "linear triangular barycentric"              # e.g., 'linear triangular barycentric', 'bi-linear', 'nearest-neighbor', 'conservative'
+  reference: "TBD"                            # Main publication or website describing the simulation
+  bathymetry: "TBD"                           # Bathymetry dataset (e.g., 'BedMachine-1.33', 'Bedmap2')
+  ice_shelf_draft: "TBD"                      # Dataset for the depth of ice-shelf base
+  atmosphere: "TBD"                           # Atmospheric forcing, with a reference (e.g., 'ERA5 (Hersbach et al. 2020)')
+                                              #    `ERAint (Dee et al. 2011)', `JRA55do (Tsujino et al. 2018)',
+                                              #    `MARv3.9.3 (Donat-Magnin et al. 2020)'
+  iceberg: "TBD"                              # Method used to account for melting icebergs, with a reference,
+                                              #     e.g. `None', `Lagrangian model (Martin and Adcroft 2010)',
+                                              #          `Prescribed freshwater (Merino et al. 2016)',
+                                              #          `Prescribed Freshwater and Heat (Merino et al. 2016)' 
+  sea_ice: "TBD"                              # Method used to simulate or prescribe the ocean--sea-ice interaction,
+                                              # with a reference, e.g. 'Dynamics-Thermodynamics Model (Hibler 1979)',
+                                              #                        'Thermodynamics Model (Bitz and Lipscomb 1999)',
+                                              #                        'Prescribed Freshwater and Heat'
+  ocean_lateral_bdy: "TBD"                    # Type of lateral boundary conditions, e.g. 'Simulation (Merino et al. 2018)',
+                                              #     'Reanalysis (Mazloff et al. 2016)', 'Observations (Locarnini et al. 2018)',
+                                              #     'Corrected simulation (explain method)', 'None' 
+  tides: "TBD"                                # Method used to account for the effect of tides on ice-shelf melt, and dataset
+                                              #     e.g. `Barotropic tidal harmonics prescribed at lateral boundaries (CATS)',
+                                              #          `Forced by a tidal potential', `None',
+                                              #          `Parameterized through uniform tidal velocity (utide=0.1 m s-1)',
+                                              #          'Parameterized through non-uniform tidal velocity (FES2012)'
+  vertical_coordinate: "TBD"                  # e.g. `Geopotential (Z)', `Stretched Geopotential (Zstar)', `Pressure (P)',
+                                              #      `Stretched Pressure (P*)', `Isopycnal', `Terrain-Following (Sigma)',
+                                              #      `Arbitrary Lagrangian-Eulerian (ALE)'
+  is_melt_param: "TBD"                        # Parameterization used to calculate ice-shelf basal melt rates,
+                                              #      e.g. `3-equation (constant gamma)', `3-equation (velocity-dependent gamma)',
+                                              #           `3-equation (stability and velocity-dependent gamma)'
+  eos: "TBD"                                  # Equation of state in original simulation (e.g., 'TEOS10', 'EOS80')
+  advection: "TBD"                            # Brief description of the momentum and tracer advection schemes 
+                                              #      (centered, third-order with limiter, etc)
+  horizontal_mixing: "TBD"                    # Brief description of how ``horizontal'' mixing was performed 
+                                              #      (harmonic, biharmonic, etc.; within model levels, along geopotentials, 
+                                              #      along isopycnals, etc.; using the Gent-McWilliams parameterization; etc)
+  vertical_mixing: "TBD" 
+                                              # Brief description of how ``vertical'' mixing was performed (constant diffusivity,
+                                              #       k-profile parameterization, etc.; harmonic, biharmonic, etc)
+  convection: "TBD"                           # Brief description of the procedure for handling convection, 
+                                              #       e.g. `Explicitly modeled', `Parameterized using enhanced vertical mixing'
