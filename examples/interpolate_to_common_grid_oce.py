@@ -27,9 +27,9 @@ np.seterr(divide='ignore', invalid='ignore') # to avoid warning due to divide by
 # 0- General information:
 
 # Choose a test case:
-#test_case='NEMO_test'
+test_case='NEMO_test'
 #test_case='MITGCM_test'
-test_case='ROMS_test'
+#test_case='ROMS_test'
 #test_case='eORCA025_test'
 
 reg='Amundsen' # 'Amundsen' or 'Weddell'
@@ -64,7 +64,7 @@ if ( (test_case[0:4] == 'NEMO') | (test_case[0:5] == 'eORCA') ):
                             #    (use "-" rather than "_" for multiple entities)
    abc='a'                  # single letter used to distinguish multiple set-up produced by a given institute
                             #    (e.g., difference or model parameters, resolution, initial states or boundary conditions)
-   exp='Ocean-A1'           # MISOMIP2 experiment name (e.g., Ocean-A1, Ocean-W1, IceOcean-A1...)
+   exp='OceanA-hind'           # MISOMIP2 experiment name (e.g., Ocean-A1, Ocean-W1, IceOcean-A1...)
 
    print('LOADING NEMO...')
 
@@ -485,7 +485,7 @@ put_global_attrs(dsmiso3d, experiment=exp, avg_hor_res_73S=res_73S, original_sim
                  original_min_lat=oce.attrs.get('original_minlat'),original_max_lat=oce.attrs.get('original_maxlat'),\
                  original_min_lon=oce.attrs.get('original_minlon'),original_max_lon=oce.attrs.get('original_maxlon') )
 
-file_miso3d = 'Oce3d_'+model+'-'+institute+'_'+abc+'_'+exp+'_'+period+'.nc'
+file_miso3d = 'Oce3d_'+institute+'_'+model+'_'+abc+'_'+exp+'_'+period+'.nc'
 
 print('Creating ',file_miso3d)
 dsmiso3d.to_netcdf(file_miso3d,unlimited_dims="time")
@@ -606,7 +606,7 @@ for sec in np.arange(1,3,1,dtype='int'):
                     original_min_lat=oce.attrs.get('original_minlat'),original_max_lat=oce.attrs.get('original_maxlat'),\
                     original_min_lon=oce.attrs.get('original_minlon'),original_max_lon=oce.attrs.get('original_maxlon') )
    
-   file_sect = 'OceSec'+str(sec)+'_'+model+'-'+institute+'_'+abc+'_'+exp+'_'+period+'.nc'
+   file_sect = 'OceSec'+str(sec)+'_'+institute+'_'+model+'_'+abc+'_'+exp+'_'+period+'.nc'
    
    print('Creating ',file_sect)
    dssect.to_netcdf(file_sect,unlimited_dims="time")
@@ -727,7 +727,7 @@ for moor in np.arange(1,9,1,dtype='int'):
       dsmoor.attrs['mooring_longitude'] = np.float32(lon_moor0d)
       dsmoor.attrs['mooring_latitude'] = np.float32(lat_moor0d)
       
-      file_moor = 'OceMoor'+str(moor)+'_'+model+'-'+institute+'_'+abc+'_'+exp+'_'+period+'.nc'
+      file_moor = 'OceMoor'+str(moor)+'_'+institute+'_'+model+'_'+abc+'_'+exp+'_'+period+'.nc'
       
       print('Creating ',file_moor)
       dsmoor.to_netcdf(file_moor,unlimited_dims="time")
