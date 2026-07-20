@@ -16,7 +16,7 @@ def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
                         files_I='dummy',\
                         files_SRF='dummy',\
                         files_M='dummy',\
-                        rho0=1026.0, teos10=False, region='Amundsen', parallel=False ):
+                        rho0=1026.0, teos10=False, region='Amundsen', parallel=False, projection=None ):
    """ Read MITgcm outputs and define an xarray dataset containing 
        all variables required in MISOMIP2. It automatically detects
        whether coordinates are stereographic or lon-lat.
@@ -38,6 +38,8 @@ def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
              =True  -> assumes the nemo outputs are in CT and AS and convert to PT and PS
         
        parallel: If True, the open and preprocess steps of this function will be performed in parallel
+
+       projection: 'lat_lon', 'polar_stereo', or None (default; code will guess)
 
        Output:
           xarray dataset of coordinates ("time", "z", "sxy") (sxy= one-dimensionalized horizontal space)
@@ -78,9 +80,17 @@ def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
 
    mtime = ncT.time.shape[0]
 
+   if projection is None:
+      if ( ( ncM.XC.min() < -180.1 ) | ( ncM.XC.max() > 360.1 ) ):
+         print('    !!! Assuming that (XC,YC) are stereographic coordinates (EPSG:3031) !!!')
+         projection = 'polar_stereo'
+      else:
+         print('    !!! Assuming that (XC,YC) are (longitude,latitude) !!!')
+         projection = 'lat_lon'
+         
+
    # longitude & latitude on U, V, T grids
-   if ( ( ncM.XC.min() < -180.1 ) | ( ncM.XC.max() > 360.1 ) ):
-      print('    !!! Assuming that (XC,YC) are stereographic coordinates (EPSG:3031) !!!')
+   if projection == 'polar_stereo':
       p = Proj('+init=EPSG:3031')
       XC2d, YC2d = np.meshgrid( ncM.XC.values, ncM.YC.values )
       XG2d, YG2d = np.meshgrid( ncM.XG.values, ncM.YG.values )
@@ -93,14 +103,28 @@ def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
       lons, lats = p(XC2d, YG2d, inverse=True)
       lonV = xr.DataArray( lons, dims=['YG', 'XC'] )
       latV = xr.DataArray( lats, dims=['YG', 'XC'] )
-   else:
-      print('    !!! Assuming that (XC,YC) are (longitude,latitude) !!!')
+   elif projection == 'lat_lon':      
       lonT = ncM.XC
       latT = ncM.YC
       lonU = ncM.XG
-      latU = ncM.XC
+      latU = ncM.YC
       lonV = ncM.XC
       latV = ncM.YG
+      # Put longitude in the range (-180, 180)
+      def fix_lon_range(lon):
+         lon = xr.where(lon >= 180, lon-360, lon)
+         lon = xr.where(lon < -180, lon+360, lon)
+         return lon
+      lonT = fix_lon_range(lonT)
+      lonU = fix_lon_range(lonU)
+      lonV = fix_lon_range(lonV)
+      if 'YC' not in lonT.dims:
+         # 1D arrays: broadcast to 2D
+         latT, lonT = xr.broadcast(latT, lonT)
+         latU, lonU = xr.broadcast(latU, lonU)
+         latV, lonV = xr.broadcast(latV, lonV)
+   else:
+      raise Exception('Invalid projection '+projection)
 
    # save original domain boundaries:
    domain_minlat = latT.min().values
@@ -174,7 +198,7 @@ def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
      DEPFLF = ncT.ice_shelf_draft
    else:
      dz = xr.DataArray( ncM.Zl.values-ncM.Zu.values, dims=['Z'] )
-     DEPFLF = DEPTHO - dz.dot(ncM.hFacC) 
+     DEPFLF = DEPTHO - dz.dot(ncM.hFacC)
 
    # ocean temperature [degC]
    isTT=True
@@ -347,6 +371,9 @@ def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
    if ( "siconc" in ncI.data_vars ):
      SICONC = ncI.siconc*100.0
      SICONC = SICONC.where( (~np.isnan(SICONC)) & (~np.isinf(SICONC)), 0.e0 )
+   elif ( "SIarea" in ncI.data_vars ):
+      SICONC = ncI.SIarea*100.0
+      SICONC = SICONC.where( (~np.isnan(SICONC)) & (~np.isinf(SICONC)), 0.e0 )
    else:
      print('    WARNING :   No data found for SICONC  -->  filled with NaNs')
      SICONC = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'YC', 'XC'] )   
@@ -356,6 +383,8 @@ def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
      SIVOL = ncI.sivolu
    elif ( "sivol" in ncI.data_vars ):
      SIVOL = ncI.sivol
+   elif ( "SIheff" in ncI.data_vars ):
+      SIVOL = ncI.SIheff
    else:
      print('    WARNING :   No data found for SIVOL  -->  filled with NaNs')
      SIVOL = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'YC', 'XC'] )
@@ -365,35 +394,45 @@ def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
      SIUX = ncI.sivelu
    elif ("siu" in ncI.data_vars ):
      SIUX = ncI.siu
+   elif ("SIuice" in ncI.data_vars ):
+      SIUX = ncI.SIuice
    else:
      print('    WARNING :   No data found for SIUX  -->  filled with NaNs')
-     SIUX = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'YC', 'XC'] )
+     SIUX = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'YC', 'XG'] )
 
    # sea-ice y-ward velocity [m/s]
    if ( "sivelv" in ncI.data_vars ):
      SIVY = ncI.sivelv
    elif ("siv" in ncI.data_vars ):
      SIVY = ncI.siv
+   elif ("SIvice" in ncI.data_vars ):
+      SIVY = ncI.SIvice
    else:
      print('    WARNING :   No data found for SIUY  -->  filled with NaNs')
-     SIVY = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'YC', 'XC'] )
+     SIVY = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'YG', 'XC'] )
 
    # Total heat flux received by the ocean surface (including ice-shelf/ocean interface) [W m-2] 
    # see Griffies et al. (2016, section K4-K5) NB: here, including correction if any unlike Griffies (to avoid 2 variables)
    if ( "qt_oce" in ncSRF.data_vars ):
      HFDS = ncSRF.qt_oce
+   elif ("oceQnet" in ncSRF.data_vars ):
+      HFDS = ncSRF.oceQnet
    else:
      print('    WARNING :   No data found for HFDS  -->  filled with NaNs')
      HFDS = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'YC', 'XC'] )
 
    # Water flux entering the ocean due to sea-ice (melting-freezing) and surface correction (SSS restoring)
-   # (= fsitherm + wfocorr in Griffies 2016 section K2) [kg m-2 s-1]
+   # (= fsitherm + wfocorr in Griffies 2016 section K2) [kg m-2 s-1]      
    if ( "wfocorr" in ncSRF.data_vars ):
      WFOCORR = - ncSRF.wfocorr
    else:
      WFOCORR = xr.DataArray( np.zeros((mtime,my,mx)), dims=['time', 'YC', 'XC'] )
    if ( "fsitherm" in ncSRF.data_vars ):
      WFOSICOR = WFOCORR - ncSRF.fsitherm
+   elif ("SIfwmelt" in ncSRF.data_vars and "SIfwfrz" in ncSRF.data_vars):
+      WFOSICOR = WFOCORR + ncSRF.SIfwmelt + ncSRF.SIfwfrz
+   elif ("SIdHbOCN" in ncSRF.data_vars and "SIdHbATC" in ncSRF.data_vars and "SIdHbATO" in ncSRF.data_vars and "SIdHbFLO" in ncSRF.data_vars):
+      WFOSICOR = WFOCORR - (ncSRF.SIdHbOCN + ncSRF.SIdHbATC + ncSRF.SIdHbATO + ncSRF.SIdHbFLO)*1e3
    else:
      print('    WARNING :   No data found for WFOSICOR  -->  filled with NaNs')
      WFOSICOR = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'YC', 'XC'] )
@@ -482,8 +521,8 @@ def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
        "WFOSICOR":  (["time", "sxy"], np.reshape( WFOSICOR.isel(XC=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "SICONC":    (["time", "sxy"], np.reshape( SICONC.isel(XC=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "SIVOL":     (["time", "sxy"], np.reshape( SIVOL.isel(XC=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
-       "SIUX":      (["time", "sxy"], np.reshape( SIUX.isel(XC=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
-       "SIVY":      (["time", "sxy"], np.reshape( SIVY.isel(XC=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
+       "SIUX":      (["time", "sxy"], np.reshape( SIUX.isel(XG=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
+       "SIVY":      (["time", "sxy"], np.reshape( SIVY.isel(XC=slice(imin,imax+1),YG=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "LEVOFT":    (["z", "sxy"], np.reshape( LEVOFT.isel(XC=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, (mz,nxy)) ),
        "LEVOFU":    (["z", "sxy"], np.reshape( LEVOFU.isel(XG=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, (mz,nxy)) ),
        "LEVOFV":    (["z", "sxy"], np.reshape( LEVOFV.isel(XC=slice(imin,imax+1),YG=slice(jmin,jmax+1)).values, (mz,nxy)) ),
