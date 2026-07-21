@@ -31,7 +31,7 @@ def add_standard_attributes_oce(ds,miss=9.969209968386869e36,verbose=False):
     ds.lev.encoding['_FillValue'] = None
     ds.lev.attrs['units'] = 'm'
     ds.lev.attrs['positive'] = 'down'
-    ds.lev.attrs['long_name'] = 'lev'
+    ds.lev.attrs['long_name'] = 'depth'
     ds.lev.attrs['standard_name'] = 'depth'
     ds.lev.attrs['comment'] = 'common MISOMIP2 grid; increases from the sea surface to the sea floor'
 
@@ -49,7 +49,7 @@ def add_standard_attributes_oce(ds,miss=9.969209968386869e36,verbose=False):
     if verbose: print('define attributes for variable longitude')
     ds.lon.attrs['units'] = 'degrees_east'
     ds.lon.attrs['long_name'] = 'Longitude'
-    ds.lon.attrs['standard_name'] = 'lon'
+    ds.lon.attrs['standard_name'] = 'longitude'
     ds.lon.attrs['comment'] = 'common MISOMIP2 grid'
 
   if ( ( "lat" in ds.data_vars ) & ~( "lat" in ds.coords ) ):
