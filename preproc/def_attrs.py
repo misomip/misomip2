@@ -228,14 +228,14 @@ def add_standard_attributes_oce(ds,miss=9.969209968386869e36,verbose=False):
      ds.wfocorr.attrs['positive'] = 'downward'
      ds.wfocorr.attrs['comment'] = 'This is the flux corresponding to the sea surface salinity restoring/adjustment that is common in global ocean models; it should be set to zero for models with no correction; models using virtual salt fluxes are invited to calculate an equivalent freshwater mass flux; this variable is not officially part of CMIP6 but was used in OMIP'
 
-  if ( "hfds" in ds.data_vars ):
-     if verbose: print('define attributes for variable hfds')
-     ds.hfds.attrs['_FillValue'] = miss
-     ds.hfds.attrs['units'] = 'W m-2'
-     ds.hfds.attrs['long_name'] = 'Downward Heat Flux at Sea Water Surface'
-     ds.hfds.attrs['standard_name'] = 'TBD'
-     ds.hfds.attrs['cell_method'] = 'area: mean where 3d ocean; time: monthly mean'
-     ds.hfds.attrs['comment'] = 'This is calculated from the net shortwave and longwave radiative fluxes penetrating into the liquid water, the sensible and latent heat fluxes at the atmosphere--ocean, sea-ice--ocean, ice-shelf--ocean (expressed as a 2D variable) and iceberg--ocean interfaces, including those related to the heat content of runoff or precipitation, and any heat flux correction at the ocean surface; see list of individual fluxes in appendix K4 of Griffies et al. (2016); this variable is similar to the hfds variable in CMIP/OMIP, except that it includes potential heat flux correction'
+  if ( "hfs" in ds.data_vars ):
+     if verbose: print('define attributes for variable hfs')
+     ds.hfs.attrs['_FillValue'] = miss
+     ds.hfs.attrs['units'] = 'W m-2'
+     ds.hfs.attrs['long_name'] = 'Downward Heat Flux at Sea Water Surface'
+     ds.hfs.attrs['standard_name'] = 'TBD'
+     ds.hfs.attrs['cell_method'] = 'area: mean where 3d ocean; time: monthly mean'
+     ds.hfs.attrs['comment'] = 'This is calculated from the net shortwave and longwave radiative fluxes penetrating into the liquid water, the sensible and latent heat fluxes at the atmosphere--ocean, sea-ice--ocean, ice-shelf--ocean (expressed as a 2D variable) and iceberg--ocean interfaces, including those related to the heat content of runoff or precipitation, and any heat flux correction at the ocean surface; see list of individual fluxes in appendix K4 of Griffies et al. (2016); this variable is similar to the hfds variable in CMIP/OMIP, except that it includes potential heat flux correction'
 
   if ( "libmassbffl" in ds.data_vars ):
      if verbose: print('define attributes for variable libmassbffl')
