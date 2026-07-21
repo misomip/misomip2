@@ -512,8 +512,8 @@ print('Creating ',file_miso3d)
 dsmiso3d.to_netcdf(file_miso3d,unlimited_dims="time")
 
 del dsmiso3d
-del SO_miso, THETAO_miso, UO_miso, VO_miso, ZOS_miso, LIBMASSBFFL_miso, DYDRFLF_miso, THDRFLF_miso, HADRFLF_miso, MSFTBAROT_miso
-del HFS_miso, WFOAT_miso, WFOCORR_miso, SICONC_miso, SIVOL_miso, SIU_miso, SIV_miso
+del SO_miso, THETAO_miso, UO_miso, VO_miso, ZOS_miso, LIBMASSBFFL_miso, DYDRFLF_miso, THDRFLF_miso, HADRFLF_miso, MSFTBAROT_miso, FLANDICE_miso
+del HFS_miso, WFOAT_miso, WFOCORR_miso, SICONC_miso, SIVOL_miso, SIU_miso, SIV_miso, FSITHERM_miso
 
 print('  Execution time: ',datetime.now() - startTime)
 
