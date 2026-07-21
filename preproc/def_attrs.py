@@ -12,28 +12,28 @@ def add_standard_attributes_oce(ds,miss=9.969209968386869e36,verbose=False):
 
   ## coordinates :
 
-  if ( "longitude" in ds.coords ):
+  if ( "lon" in ds.coords ):
     if verbose: print('define attributes for coordinate longitude')
-    ds.longitude.encoding['_FillValue'] = None
-    ds.longitude.attrs['units'] = 'degrees_east'
-    ds.longitude.attrs['long_name'] = 'Longitude'
-    ds.longitude.attrs['standard_name'] = 'longitude'
+    ds.lon.encoding['_FillValue'] = None
+    ds.lon.attrs['units'] = 'degrees_east'
+    ds.lon.attrs['long_name'] = 'Longitude'
+    ds.lon.attrs['standard_name'] = 'longitude'
 
-  if ( "latitude" in ds.coords ):
+  if ( "lat" in ds.coords ):
     if verbose: print('define attributes for coordinate latitude')
-    ds.latitude.encoding['_FillValue'] = None
-    ds.latitude.attrs['units'] = 'degrees_north'
-    ds.latitude.attrs['long_name'] = 'Latitude'
-    ds.latitude.attrs['standard_name'] = 'latitude'
+    ds.lat.encoding['_FillValue'] = None
+    ds.lat.attrs['units'] = 'degrees_north'
+    ds.lat.attrs['long_name'] = 'Latitude'
+    ds.lat.attrs['standard_name'] = 'latitude'
 
   if ( "lev" in ds.coords ):
     if verbose: print('define attributes for coordinate lev')
-    ds.depth.encoding['_FillValue'] = None
-    ds.depth.attrs['units'] = 'm'
-    ds.depth.attrs['positive'] = 'down'
-    ds.depth.attrs['long_name'] = 'depth'
-    ds.depth.attrs['standard_name'] = 'depth'
-    ds.depth.attrs['comment'] = 'common MISOMIP2 grid; increases from the sea surface to the sea floor'
+    ds.lev.encoding['_FillValue'] = None
+    ds.lev.attrs['units'] = 'm'
+    ds.lev.attrs['positive'] = 'down'
+    ds.lev.attrs['long_name'] = 'depth'
+    ds.lev.attrs['standard_name'] = 'depth'
+    ds.lev.attrs['comment'] = 'common MISOMIP2 grid; increases from the sea surface to the sea floor'
 
   if ( "time" in ds.coords ):
     if verbose: print('define attributes for coordinate time')
@@ -45,19 +45,19 @@ def add_standard_attributes_oce(ds,miss=9.969209968386869e36,verbose=False):
 
   ## variables :
 
-  if ( ( "longitude" in ds.data_vars ) & ~( "longitude" in ds.coords ) ):
+  if ( ( "lon" in ds.data_vars ) & ~( "lon" in ds.coords ) ):
     if verbose: print('define attributes for variable longitude')
-    ds.longitude.attrs['units'] = 'degrees_east'
-    ds.longitude.attrs['long_name'] = 'Longitude'
-    ds.longitude.attrs['standard_name'] = 'longitude'
-    ds.longitude.attrs['comment'] = 'common MISOMIP2 grid'
+    ds.lon.attrs['units'] = 'degrees_east'
+    ds.lon.attrs['long_name'] = 'Longitude'
+    ds.lon.attrs['standard_name'] = 'longitude'
+    ds.lon.attrs['comment'] = 'common MISOMIP2 grid'
 
-  if ( ( "latitude" in ds.data_vars ) & ~( "latitude" in ds.coords ) ):
+  if ( ( "lat" in ds.data_vars ) & ~( "lat" in ds.coords ) ):
     if verbose: print('define attributes for variable latitude')
-    ds.latitude.attrs['units'] = 'degrees_north'
-    ds.latitude.attrs['long_name'] = 'Latitude'
-    ds.latitude.attrs['standard_name'] = 'latitude'
-    ds.latitude.attrs['comment'] = 'common MISOMIP2 grid'
+    ds.lat.attrs['units'] = 'degrees_north'
+    ds.lat.attrs['long_name'] = 'Latitude'
+    ds.lat.attrs['standard_name'] = 'latitude'
+    ds.lat.attrs['comment'] = 'common MISOMIP2 grid'
 
   if ( "sftflf" in ds.data_vars ):
      if verbose: print('define attributes for variable sftflf')

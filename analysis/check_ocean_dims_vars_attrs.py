@@ -7,9 +7,9 @@ import sys
 # User's specification for checking all outputs
 
 institute='IGE-CNRS-UGA'
-model='NEMO4.0'
+model='NEMO3.6'
 
-dir_model='DATA/NEMO4.0-IGE-CNRS-UGA_a'
+dir_model='./' #NEMO4.0-IGE-CNRS-UGA_a'
 
 #==================================================
 
@@ -28,7 +28,6 @@ for region in ['A', 'W']:
       print('-----------------------------------------------')
       IDmoor = str(kmoor+1)
       file_mod=glob.glob(dir_model+'/OceMoor'+IDmoor+'_'+institute+'_'+model+'_?_Ocean'+region+'-hind_*.nc')[0]
-      #file_mod=glob.glob(dir_model+'/OceMoor'+IDmoor+'_'+model+'-'+institute+'_?_Ocean'+region+'-hind_*.nc')[0]
       print(file_mod)
       ds = xr.open_dataset(file_mod)
       if not ( ( "lev" in ds.dims ) & ( "time" in ds.dims )):
@@ -54,7 +53,6 @@ for region in ['A', 'W']:
       print('-----------------------------------------------')
       IDsec = str(ksec+1)
       file_mod=glob.glob(dir_model+'/OceSec'+IDsec+'_'+institute+'_'+model+'_?_Ocean'+region+'-hind_*.nc')[0]
-      #file_mod=glob.glob(dir_model+'/OceSec'+IDsec+'_'+model+'-'+institute+'_?_Ocean'+region+'-hind_*.nc')[0]
       print(file_mod)
       ds = xr.open_dataset(file_mod)
       if not ( ( "x" in ds.dims ) & ( "lev" in ds.dims ) & ( "time" in ds.dims )):

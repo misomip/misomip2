@@ -445,36 +445,36 @@ DEPTHO_miso[ np.isnan(DOMMSK_miso) | (DEPTHO_miso==0.) ] = missval
 
 dsmiso3d = xr.Dataset(
     {
-    "so":        (["time", "depth", "latitude", "longitude"], np.float32(SO_miso)),
-    "thetao":    (["time", "depth", "latitude", "longitude"], np.float32(THETAO_miso)),
-    "uo":        (["time", "depth", "latitude", "longitude"], np.float32(UO_miso)),
-    "vo":        (["time", "depth", "latitude", "longitude"], np.float32(VO_miso)),
-    "tauuo":     (["time", "latitude", "longitude"], np.float32(TAUUO_miso)),
-    "tauvo":     (["time", "latitude", "longitude"], np.float32(TAUVO_miso)),
-    "zos":       (["time", "latitude", "longitude"], np.float32(ZOS_miso)),
-    "tob":       (["time", "latitude", "longitude"], np.float32(TOB_miso)),
-    "sob":       (["time", "latitude", "longitude"], np.float32(SOB_miso)),
-    "ficeshelf": (["time", "latitude", "longitude"], np.float32(FICESHELF_miso)),
-    "dydrflf":   (["time", "latitude", "longitude"], np.float32(DYDRFLF_miso)),
-    "thdrflf":   (["time", "latitude", "longitude"], np.float32(THDRFLF_miso)),
-    "hadrflf":   (["time", "latitude", "longitude"], np.float32(HADRFLF_miso)),
-    "msftbarot": (["time", "latitude", "longitude"], np.float32(MSFTBAROT_miso)),
-    "hfds":      (["time", "latitude", "longitude"], np.float32(HFDS_miso)),
-    "wfoatrli":  (["time", "latitude", "longitude"], np.float32(WFOATRLI_miso)),
-    "wfosicor":  (["time", "latitude", "longitude"], np.float32(WFOSICOR_miso)),
-    "siconc":    (["time", "latitude", "longitude"], np.float32(SICONC_miso)),
-    "sivol":     (["time", "latitude", "longitude"], np.float32(SIVOL_miso)),
-    "siu":       (["time", "latitude", "longitude"], np.float32(SIU_miso)),
-    "siv":       (["time", "latitude", "longitude"], np.float32(SIV_miso)),
-    "levof":     (["depth", "latitude", "longitude"], np.float32(LEVOF_miso)),
-    "sftflf":    (["latitude", "longitude"], np.float32(SFTFLF_miso)),
-    "depflf":    (["latitude", "longitude"], np.float32(DEPFLF_miso)),
-    "deptho":    (["latitude", "longitude"], np.float32(DEPTHO_miso)),
+    "so":        (["time", "lev", "lat", "lon"], np.float32(SO_miso)),
+    "thetao":    (["time", "lev", "lat", "lon"], np.float32(THETAO_miso)),
+    "uo":        (["time", "lev", "lat", "lon"], np.float32(UO_miso)),
+    "vo":        (["time", "lev", "lat", "lon"], np.float32(VO_miso)),
+    "tauuo":     (["time", "lat", "lon"], np.float32(TAUUO_miso)),
+    "tauvo":     (["time", "lat", "lon"], np.float32(TAUVO_miso)),
+    "zos":       (["time", "lat", "lon"], np.float32(ZOS_miso)),
+    "tob":       (["time", "lat", "lon"], np.float32(TOB_miso)),
+    "sob":       (["time", "lat", "lon"], np.float32(SOB_miso)),
+    "ficeshelf": (["time", "lat", "lon"], np.float32(FICESHELF_miso)),
+    "dydrflf":   (["time", "lat", "lon"], np.float32(DYDRFLF_miso)),
+    "thdrflf":   (["time", "lat", "lon"], np.float32(THDRFLF_miso)),
+    "hadrflf":   (["time", "lat", "lon"], np.float32(HADRFLF_miso)),
+    "msftbarot": (["time", "lat", "lon"], np.float32(MSFTBAROT_miso)),
+    "hfds":      (["time", "lat", "lon"], np.float32(HFDS_miso)),
+    "wfoatrli":  (["time", "lat", "lon"], np.float32(WFOATRLI_miso)),
+    "wfosicor":  (["time", "lat", "lon"], np.float32(WFOSICOR_miso)),
+    "siconc":    (["time", "lat", "lon"], np.float32(SICONC_miso)),
+    "sivol":     (["time", "lat", "lon"], np.float32(SIVOL_miso)),
+    "siu":       (["time", "lat", "lon"], np.float32(SIU_miso)),
+    "siv":       (["time", "lat", "lon"], np.float32(SIV_miso)),
+    "levof":     (["lev", "lat", "lon"], np.float32(LEVOF_miso)),
+    "sftflf":    (["lat", "lon"], np.float32(SFTFLF_miso)),
+    "depflf":    (["lat", "lon"], np.float32(DEPFLF_miso)),
+    "deptho":    (["lat", "lon"], np.float32(DEPTHO_miso)),
     },
     coords={
-    "longitude":np.float32(lon_miso),
-    "latitude": np.float32(lat_miso),
-    "depth": np.float32(dep_miso),
+    "lon":np.float32(lon_miso),
+    "lat": np.float32(lat_miso),
+    "lev": np.float32(dep_miso),
     "time": oce.time.values
     },
 )
@@ -588,14 +588,14 @@ for sec in np.arange(1,3,1,dtype='int'):
    
    dssect = xr.Dataset(
        {
-       "so":        (["time", "depth", "x"], np.float32(SO_sect)),
-       "thetao":    (["time", "depth", "x"], np.float32(THETAO_sect)),
-       "levof":     (["depth", "x"], np.float32(LEVOF_sect)),
-       "longitude": (["x"], np.float32(lon_sect1d)),
-       "latitude": (["x"], np.float32(lat_sect1d)),
+       "so":        (["time", "lev", "x"], np.float32(SO_sect)),
+       "thetao":    (["time", "lev", "x"], np.float32(THETAO_sect)),
+       "levof":     (["lev", "x"], np.float32(LEVOF_sect)),
+       "lon": (["x"], np.float32(lon_sect1d)),
+       "lat": (["x"], np.float32(lat_sect1d)),
        },
        coords={
-       "depth": np.float32(dep_sect),
+       "lev": np.float32(dep_sect),
        "time": oce.time.values
        },
    )
@@ -709,12 +709,12 @@ for moor in np.arange(1,9,1,dtype='int'):
       
       dsmoor = xr.Dataset(
           {
-          "so":        (["time", "depth"], np.float32(SO_moor)),
-          "thetao":    (["time", "depth"], np.float32(THETAO_moor)),
-          "levof":     (["depth"], np.float32(LEVOF_moor)),
+          "so":        (["time", "lev"], np.float32(SO_moor)),
+          "thetao":    (["time", "lev"], np.float32(THETAO_moor)),
+          "levof":     (["lev"], np.float32(LEVOF_moor)),
           },
           coords={
-          "depth": np.float32(dep_moor),
+          "lev": np.float32(dep_moor),
           "time": oce.time.values
           },
       )
@@ -724,8 +724,8 @@ for moor in np.arange(1,9,1,dtype='int'):
                        ocean_model=model, institute=institute, \
                        original_min_lat=oce.attrs.get('original_minlat'),original_max_lat=oce.attrs.get('original_maxlat'),\
                        original_min_lon=oce.attrs.get('original_minlon'),original_max_lon=oce.attrs.get('original_maxlon') )
-      dsmoor.attrs['mooring_longitude'] = np.float32(lon_moor0d)
-      dsmoor.attrs['mooring_latitude'] = np.float32(lat_moor0d)
+      dsmoor.attrs['mooring_lon'] = np.float32(lon_moor0d)
+      dsmoor.attrs['mooring_lat'] = np.float32(lat_moor0d)
       
       file_moor = 'OceMoor'+str(moor)+'_'+institute+'_'+model+'_'+abc+'_'+exp+'_'+period+'.nc'
       
