@@ -13,7 +13,8 @@
 import numpy as np
 import xarray as xr
 import sys
-sys.path.append("/Users/jourdain/MY_SCRIPTS")
+#sys.path.append("/Users/jourdain/MY_SCRIPTS")
+sys.path.append("/ccc/work/cont003/gen6035/mathiotp/MISOMIP2_debug/")
 #sys.path.append("/Users/nakayama/Documents/GitHub/")
 import misomip2.preproc as mp
 import os
@@ -248,6 +249,10 @@ theT = mp.horizontal_interp( latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*a
 theU = mp.horizontal_interp( latU, lonU*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.thetaU )
 theV = mp.horizontal_interp( latV, lonV*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.thetaV )
 
+# Sea Area Percentage at the Surface on MISOMIP grid (in [0-100], =nan beyond model domain)
+SFTOF_miso = mp.horizontal_interp( latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.SFTOF )
+SFTOF_miso[ np.isnan(DOMMSK_miso) ] = 0.e0 # will update to missval at the end of the calculation
+
 # Ice shelf fraction on MISOMIP grid (in [0-100], =nan beyond model domain)
 SFTFLF_miso = mp.horizontal_interp( latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.SFTFLF )
 SFTFLF_miso[ np.isnan(DOMMSK_miso) ] = 0.e0 # will update to missval at the end of the calculation
@@ -294,14 +299,16 @@ VO_miso     = np.zeros((mtime,mdep,mlat,mlon)) + missval
 ZOS_miso    = np.zeros((mtime,mlat,mlon)) + missval
 TOB_miso    = np.zeros((mtime,mlat,mlon)) + missval
 SOB_miso    = np.zeros((mtime,mlat,mlon)) + missval
-FICESHELF_miso = np.zeros((mtime,mlat,mlon)) + missval
+FLANDICE_miso = np.zeros((mtime,mlat,mlon)) + missval
+FSITHERM_miso = np.zeros((mtime,mlat,mlon)) + missval
+LIBMASSBFFL_miso = np.zeros((mtime,mlat,mlon)) + missval
 DYDRFLF_miso = np.zeros((mtime,mlat,mlon)) + missval
 THDRFLF_miso = np.zeros((mtime,mlat,mlon)) + missval
 HADRFLF_miso = np.zeros((mtime,mlat,mlon)) + missval
 MSFTBAROT_miso = np.zeros((mtime,mlat,mlon)) + missval
-HFDS_miso = np.zeros((mtime,mlat,mlon)) + missval
-WFOATRLI_miso = np.zeros((mtime,mlat,mlon)) + missval
-WFOSICOR_miso = np.zeros((mtime,mlat,mlon)) + missval
+HFS_miso = np.zeros((mtime,mlat,mlon)) + missval
+WFOAT_miso = np.zeros((mtime,mlat,mlon)) + missval
+WFOCORR_miso = np.zeros((mtime,mlat,mlon)) + missval
 SICONC_miso = np.zeros((mtime,mlat,mlon)) + missval
 SIVOL_miso = np.zeros((mtime,mlat,mlon)) + missval
 SIU_miso = np.zeros((mtime,mlat,mlon)) + missval
@@ -330,15 +337,20 @@ for ll in np.arange(mtime):
   tzz[ np.isnan(tzz) | domcond ] = missval
   SOB_miso[ll,:,:] = tzz
 
-  tzz = mp.horizontal_interp( latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.HFDS.isel(time=ll), \
+  tzz = mp.horizontal_interp( latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.HFS.isel(time=ll), \
                               weight=seafracT, skipna=True, filnocvx=filmis, threshold=epsfr ) 
   tzz[ np.isnan(tzz) | domcond ] = missval
-  HFDS_miso[ll,:,:] = tzz
+  HFS_miso[ll,:,:] = tzz
 
-  tzz = mp.horizontal_interp( latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.WFOATRLI.isel(time=ll), \
+  tzz = mp.horizontal_interp( latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.WFOAT.isel(time=ll), \
                               weight=seafracT, skipna=True, filnocvx=filmis, threshold=epsfr ) 
   tzz[ np.isnan(tzz) | domcond ] = missval
-  WFOATRLI_miso[ll,:,:] = tzz
+  WFOAT_miso[ll,:,:] = tzz
+
+  tzz = mp.horizontal_interp( latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.FLANDICE.isel(time=ll), \
+                              weight=seafracT, skipna=True, filnocvx=filmis, threshold=epsfr )
+  tzz[ np.isnan(tzz) | domcond ] = missval
+  FLANDICE_miso[ll,:,:] = tzz
 
   ## fields interpolated from sea cells ( U & V grids ):
 
@@ -358,10 +370,10 @@ for ll in np.arange(mtime):
 
   ## fileds interpolated from open-sea cells :
 
-  tzz = mp.horizontal_interp( latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.WFOSICOR.isel(time=ll), \
+  tzz = mp.horizontal_interp( latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.WFOCORR.isel(time=ll), \
                               weight=openseafracT, skipna=True, filnocvx=filmis, threshold=epsfr )
   tzz[ np.isnan(tzz) | domcond ] = missval
-  WFOSICOR_miso[ll,:,:] = tzz
+  WFOCORR_miso[ll,:,:] = tzz
 
   tzz = mp.horizontal_interp( latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.SICONC.isel(time=ll), \
                               weight=openseafracT, skipna=True, filnocvx=filmis, threshold=epsfr )
@@ -373,12 +385,17 @@ for ll in np.arange(mtime):
   tzz[ np.isnan(tzz) | domcond ] = missval
   SIVOL_miso[ll,:,:] = tzz
 
+  tzz = mp.horizontal_interp( latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.FSITHERM.isel(time=ll), \
+                              weight=openseafracT, skipna=True, filnocvx=filmis, threshold=epsfr )
+  tzz[ np.isnan(tzz) | domcond ] = missval
+  FSITHERM_miso[ll,:,:] = tzz
+
   ## fileds interpolated from ice-shelf cells :
 
-  tzz = mp.horizontal_interp( latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.FICESHELF.isel(time=ll), \
+  tzz = mp.horizontal_interp( latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.LIBMASSBFFL.isel(time=ll), \
                               weight=oce.SFTFLF, skipna=True, filnocvx=filmis, threshold=epsfr )
   tzz[ np.isnan(tzz) | domcond ] = missval
-  FICESHELF_miso[ll,:,:] = tzz
+  LIBMASSBFFL_miso[ll,:,:] = tzz
 
   tzz = mp.horizontal_interp( latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.DYDRFLF.isel(time=ll), \
                               weight=oce.SFTFLF, skipna=True, filnocvx=filmis, threshold=epsfr ) 
@@ -436,6 +453,7 @@ for ll in np.arange(mtime):
 
 LEVOF_miso[ np.isnan(LEVOF_miso) ] = missval
 SFTFLF_miso[ np.isnan(SFTFLF_miso) | np.isnan(DOMMSK_miso) ] = missval 
+SFTOF_miso[ np.isnan(SFTOF_miso) | np.isnan(DOMMSK_miso) ] = missval 
 SICONC_miso[ np.isnan(SICONC_miso) ] = missval
 DEPFLF_miso[ (DEPFLF_miso==0.e0) | np.isnan(DOMMSK_miso) ] = missval
 DEPTHO_miso[ np.isnan(DOMMSK_miso) | (DEPTHO_miso==0.) ] = missval
@@ -454,19 +472,22 @@ dsmiso3d = xr.Dataset(
     "zos":       (["time", "lat", "lon"], np.float32(ZOS_miso)),
     "tob":       (["time", "lat", "lon"], np.float32(TOB_miso)),
     "sob":       (["time", "lat", "lon"], np.float32(SOB_miso)),
-    "ficeshelf": (["time", "lat", "lon"], np.float32(FICESHELF_miso)),
+    "libmassbffl": (["time", "lat", "lon"], np.float32(LIBMASSBFFL_miso)),
     "dydrflf":   (["time", "lat", "lon"], np.float32(DYDRFLF_miso)),
     "thdrflf":   (["time", "lat", "lon"], np.float32(THDRFLF_miso)),
     "hadrflf":   (["time", "lat", "lon"], np.float32(HADRFLF_miso)),
     "msftbarot": (["time", "lat", "lon"], np.float32(MSFTBAROT_miso)),
-    "hfds":      (["time", "lat", "lon"], np.float32(HFDS_miso)),
-    "wfoatrli":  (["time", "lat", "lon"], np.float32(WFOATRLI_miso)),
-    "wfosicor":  (["time", "lat", "lon"], np.float32(WFOSICOR_miso)),
+    "flandice":  (["time", "lat", "lon"], np.float32(FLANDICE_miso)),
+    "fsitherm":  (["time", "lat", "lon"], np.float32(FSITHERM_miso)),
+    "hfs":       (["time", "lat", "lon"], np.float32(HFS_miso)),
+    "wfoat":     (["time", "lat", "lon"], np.float32(WFOAT_miso)),
+    "wfocorr":   (["time", "lat", "lon"], np.float32(WFOCORR_miso)),
     "siconc":    (["time", "lat", "lon"], np.float32(SICONC_miso)),
     "sivol":     (["time", "lat", "lon"], np.float32(SIVOL_miso)),
     "siu":       (["time", "lat", "lon"], np.float32(SIU_miso)),
     "siv":       (["time", "lat", "lon"], np.float32(SIV_miso)),
     "levof":     (["lev", "lat", "lon"], np.float32(LEVOF_miso)),
+    "sftof":     (["lat", "lon"], np.float32(SFTOF_miso)),
     "sftflf":    (["lat", "lon"], np.float32(SFTFLF_miso)),
     "depflf":    (["lat", "lon"], np.float32(DEPFLF_miso)),
     "deptho":    (["lat", "lon"], np.float32(DEPTHO_miso)),
@@ -491,8 +512,8 @@ print('Creating ',file_miso3d)
 dsmiso3d.to_netcdf(file_miso3d,unlimited_dims="time")
 
 del dsmiso3d
-del SO_miso, THETAO_miso, UO_miso, VO_miso, ZOS_miso, FICESHELF_miso, DYDRFLF_miso, THDRFLF_miso, HADRFLF_miso, MSFTBAROT_miso
-del HFDS_miso, WFOATRLI_miso, WFOSICOR_miso, SICONC_miso, SIVOL_miso, SIU_miso, SIV_miso
+del SO_miso, THETAO_miso, UO_miso, VO_miso, ZOS_miso, LIBMASSBFFL_miso, DYDRFLF_miso, THDRFLF_miso, HADRFLF_miso, MSFTBAROT_miso
+del HFS_miso, WFOAT_miso, WFOCORR_miso, SICONC_miso, SIVOL_miso, SIU_miso, SIV_miso
 
 print('  Execution time: ',datetime.now() - startTime)
 
