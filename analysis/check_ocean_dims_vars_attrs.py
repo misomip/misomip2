@@ -68,8 +68,8 @@ for region in ['A', 'W']:
    #-------------------------------
    # 3d Oce :
    if region == 'A':
-      mlon=211
-      mlat=501
+      mlon=501
+      mlat=211
    else:
       mlon=271
       mlat=251
