@@ -130,9 +130,9 @@ elif ( test_case[0:4] == 'ROMS' ):
         oce = mp.load_oce_mod_roms( files_M=f_grid, files_T=f_ALL, rho0=1026.0, teos10=False )
 
    elif test_case == 'ROMS-UTAS':
-        data_dir='/g/data/jk72/deg581/amundsen-isom/mdl/amundsen_IAF/'   # set directory of output data
-        f_grid = '/g/data/jk72/deg581/amundsen-isom/amundsen-setup/data/proc/amundsen_2.5km_v1.5_grd.nc' # grid file directory
-        f_ALL  = [f"/g/data/jk72/deg581/amundsen-isom/ana/proc/amundsen_IAF_his_monmean_{year:04d}.nc" for year in range(1992, 2016)]  #file list for model output
+        print('LOADING ROMS simulation output.')
+        f_grid = data_dir+'/amundsen_2.5km_v1.5_grd.nc' # grid file directory
+        f_ALL  = [data_dir+"amundsen_IAF_his_monmean_{year:04d}.nc" for year in range(1992, 2020)]  #file list for model output
         print(f_ALL)
 
         if loading_method == 'interpolated':

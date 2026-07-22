@@ -9,6 +9,7 @@ import gsw
 from .def_grids import grid_bounds_oce
 from .interp_functions import calc_z
 from datetime import datetime
+import os, psutil
 
 #====================================================================================
 def load_oce_mod_roms(files_T='ROMS_all.nc',\
@@ -437,7 +438,6 @@ def load_oce_mod_roms(files_T='ROMS_all.nc',\
    UX_z = np.zeros((mtime,mz,np.shape(ztmp)[1],np.shape(ztmp)[2]))
    VY_z = np.zeros((mtime,mz,np.shape(ztmp)[1],np.shape(ztmp)[2]))
     
-   import os, psutil
    nz = np.size(newdepth)
    for kk in np.arange(np.size(newdepth)):
      print(f"\nDepth {kk+1}/{nz}")
