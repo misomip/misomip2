@@ -125,6 +125,11 @@ filmis=False  # keep False (may become a deprecitated option)
               # if True, will fill nans (missing values in input file or values that can't be triangulated) 
               # through nearest-neighbor interpolation. This can be useful for the edges of non-structured grids.
 
+# dimension names
+cdlon='lon'
+cdlat='lat'
+cdlev='lev'
+
 #--------------------------------------------------------------------------
 # 3- Interpolate to common 3d grid :
 #--------------------------------------------------------------------------
@@ -263,10 +268,12 @@ for reg in tasks.keys():
     LEVOFT=oce.LEVOFT
     LEVOFU=oce.LEVOFU
     LEVOFV=oce.LEVOFV
+
     # 2d sea fraction (including under-ice-shelf seas)
     seafracT=LEVOFT.max('z',skipna=True) # 100 if any ocean point, including under ice shelves, =0 or =nan if no ocean point
     seafracU=LEVOFU.max('z',skipna=True)
     seafracV=LEVOFV.max('z',skipna=True)
+
     # 2d sea fraction (NOT including under-ice-shelf seas)
     openseafracT=LEVOFT.isel(z=0) # 100 only if open ocean point
     openseafracU=LEVOFU.isel(z=0)
@@ -291,6 +298,10 @@ for reg in tasks.keys():
     theU = mp.horizontal_interp( latU, lonU*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.thetaU )
     theV = mp.horizontal_interp( latV, lonV*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.thetaV )
     
+    # Sea Area Percentage at the Surface on MISOMIP grid (in [0-100], =nan beyond model domain)
+    SFTOF_miso = mp.horizontal_interp( latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.SFTOF )
+    SFTOF_miso[ np.isnan(DOMMSK_miso) ] = 0.e0 # will update to missval at the end of the calculation
+
     # Ice shelf fraction on MISOMIP grid (in [0-100], =nan beyond model domain)
     SFTFLF_miso = mp.horizontal_interp( latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.SFTFLF )
     SFTFLF_miso[ np.isnan(DOMMSK_miso) ] = 0.e0 # will update to missval at the end of the calculation
@@ -331,21 +342,23 @@ for reg in tasks.keys():
 
     #------ write static fields:
     LEVOF_miso[ np.isnan(LEVOF_miso) ] = missval
+    SFTOF_miso[ np.isnan(SFTOF_miso) | np.isnan(DOMMSK_miso) ] = missval 
     SFTFLF_miso[ np.isnan(SFTFLF_miso) | np.isnan(DOMMSK_miso) ] = missval 
     DEPFLF_miso[ (DEPFLF_miso==0.e0) | np.isnan(DOMMSK_miso) ] = missval
     DEPTHO_miso[ np.isnan(DOMMSK_miso) | (DEPTHO_miso==0.) ] = missval
  
     dsmiso3d = xr.Dataset(
         {
-        "levof":     (["depth", "latitude", "longitude"], np.float32(LEVOF_miso)),
-        "sftflf":    (["latitude", "longitude"], np.float32(SFTFLF_miso)),
-        "depflf":    (["latitude", "longitude"], np.float32(DEPFLF_miso)),
-        "deptho":    (["latitude", "longitude"], np.float32(DEPTHO_miso)),
+        "levof":     ([cdlev, cdlat, cdlon], np.float32(LEVOF_miso)),
+        "sftof":     ([cdlat, cdlon], np.float32(SFTOF_miso)),
+        "sftflf":    ([cdlat, cdlon], np.float32(SFTFLF_miso)),
+        "depflf":    ([cdlat, cdlon], np.float32(DEPFLF_miso)),
+        "deptho":    ([cdlat, cdlon], np.float32(DEPTHO_miso)),
         },
         coords={
-        "longitude":np.float32(lon_miso),
-        "latitude": np.float32(lat_miso),
-        "depth": np.float32(dep_miso),
+        cdlon:np.float32(lon_miso),
+        cdlat: np.float32(lat_miso),
+        cdlev: np.float32(dep_miso),
         "time": oce.time.values
         },
     )
@@ -353,11 +366,11 @@ for reg in tasks.keys():
    
     #---- 2D T fields
 
-    dsmiso3d['zos']      = (["time", "latitude", "longitude"], np.float32(np.zeros((mtime,mlat,mlon)) + missval))
-    dsmiso3d['tob']      = (["time", "latitude", "longitude"], np.float32(np.zeros((mtime,mlat,mlon)) + missval))
-    dsmiso3d['sob']      = (["time", "latitude", "longitude"], np.float32(np.zeros((mtime,mlat,mlon)) + missval))
-    dsmiso3d['hfds']     = (["time", "latitude", "longitude"], np.float32(np.zeros((mtime,mlat,mlon)) + missval))
-    dsmiso3d['wfoatrli'] = (["time", "latitude", "longitude"], np.float32(np.zeros((mtime,mlat,mlon)) + missval))
+    dsmiso3d['zos']      = (["time", cdlat, cdlon], np.float32(np.zeros((mtime,mlat,mlon)) + missval))
+    dsmiso3d['tob']      = (["time", cdlat, cdlon], np.float32(np.zeros((mtime,mlat,mlon)) + missval))
+    dsmiso3d['sob']      = (["time", cdlat, cdlon], np.float32(np.zeros((mtime,mlat,mlon)) + missval))
+    dsmiso3d['hfs']      = (["time", cdlat, cdlon], np.float32(np.zeros((mtime,mlat,mlon)) + missval))
+    dsmiso3d['flandice'] = (["time", cdlat, cdlon], np.float32(np.zeros((mtime,mlat,mlon)) + missval))
     for ll in np.arange(mtime):
     
         ## fields interpolated from sea cells ( C/T grid ):
@@ -366,7 +379,7 @@ for reg in tasks.keys():
         print(datetime.now() - startTime)
 
         #-----------------
-        #tri for ZOS, TOB, SOB, HDFS (isf + oce), WFOATRLI (isf + oce)
+        #tri for ZOS, TOB, SOB, HFS, WFOAT
         triT, nanmaskT = compute_tri_and_mask(oce.ZOS.isel(time=ll), lonT*aa, latT, nandrop=True)
    
         tzz = mp.horizontal_interp_tri( triT, nanmaskT, latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.ZOS.isel(time=ll), \
@@ -384,20 +397,20 @@ for reg in tasks.keys():
         tzz[ np.isnan(tzz) | domcond ] = missval
         dsmiso3d['sob'][ll,:,:] = tzz
       
-        tzz = mp.horizontal_interp_tri( triT, nanmaskT, latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.HFDS.isel(time=ll), \
+        tzz = mp.horizontal_interp_tri( triT, nanmaskT, latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.HFS.isel(time=ll), \
                                     weight=seafracT, skipna=True, filnocvx=filmis, threshold=epsfr ) 
         tzz[ np.isnan(tzz) | domcond ] = missval
-        dsmiso3d['hfds'][ll,:,:] = tzz
+        dsmiso3d['hfs'][ll,:,:] = tzz
       
-        tzz = mp.horizontal_interp_tri( triT, nanmaskT, latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.WFOATRLI.isel(time=ll), \
-                                    weight=seafracT, skipna=True, filnocvx=filmis, threshold=epsfr ) 
+        tzz = mp.horizontal_interp( latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.FLANDICE.isel(time=ll), \
+                                    weight=seafracT, skipna=True, filnocvx=filmis, threshold=epsfr )
         tzz[ np.isnan(tzz) | domcond ] = missval
-        dsmiso3d['wfoatrli'][ll,:,:] = tzz
+        dsmiso3d['flandice'][ll,:,:] = tzz
 
     #----- U & V grids 2D
-    dsmiso3d['tauvo']    = (["time", "latitude", "longitude"], np.float32(np.zeros((mtime,mlat,mlon)) + missval))
-    dsmiso3d['tauuo']    = (["time", "latitude", "longitude"], np.float32(np.zeros((mtime,mlat,mlon)) + missval))
-    dsmiso3d['msftbarot']= (["time", "latitude", "longitude"], np.float32(np.zeros((mtime,mlat,mlon)) + missval))
+    dsmiso3d['tauvo']    = (["time", cdlat, cdlon], np.float32(np.zeros((mtime,mlat,mlon)) + missval))
+    dsmiso3d['tauuo']    = (["time", cdlat, cdlon], np.float32(np.zeros((mtime,mlat,mlon)) + missval))
+    dsmiso3d['msftbarot']= (["time", cdlat, cdlon], np.float32(np.zeros((mtime,mlat,mlon)) + missval))
     for ll in np.arange(mtime):
 
         ## fields interpolated from sea cells ( C/T grid ):
@@ -426,11 +439,14 @@ for reg in tasks.keys():
         dsmiso3d['tauvo'][ll,:,:] = tzz
 
     #------- sea ice fields 2D
-    dsmiso3d['wfosicor'] = (["time", "latitude", "longitude"], np.float32(np.zeros((mtime,mlat,mlon)) + missval))
-    dsmiso3d['siconc']   = (["time", "latitude", "longitude"], np.float32(np.zeros((mtime,mlat,mlon)) + missval))
-    dsmiso3d['sivol']    = (["time", "latitude", "longitude"], np.float32(np.zeros((mtime,mlat,mlon)) + missval))
-    dsmiso3d['siu']      = (["time", "latitude", "longitude"], np.float32(np.zeros((mtime,mlat,mlon)) + missval))
-    dsmiso3d['siv']      = (["time", "latitude", "longitude"], np.float32(np.zeros((mtime,mlat,mlon)) + missval))
+    dsmiso3d['wfocorr']  = (["time", cdlat, cdlon], np.float32(np.zeros((mtime,mlat,mlon)) + missval))
+    dsmiso3d['wfoat']    = (["time", cdlat, cdlon], np.float32(np.zeros((mtime,mlat,mlon)) + missval))
+    dsmiso3d['siconc']   = (["time", cdlat, cdlon], np.float32(np.zeros((mtime,mlat,mlon)) + missval))
+    dsmiso3d['sivol']    = (["time", cdlat, cdlon], np.float32(np.zeros((mtime,mlat,mlon)) + missval))
+    dsmiso3d['fsitherm'] = (["time", cdlat, cdlon], np.float32(np.zeros((mtime,mlat,mlon)) + missval))
+    dsmiso3d['siu']      = (["time", cdlat, cdlon], np.float32(np.zeros((mtime,mlat,mlon)) + missval))
+    dsmiso3d['siv']      = (["time", cdlat, cdlon], np.float32(np.zeros((mtime,mlat,mlon)) + missval))
+
     for ll in np.arange(mtime):
 
         ## fields interpolated from sea cells ( C/T grid ):
@@ -439,13 +455,18 @@ for reg in tasks.keys():
         print(datetime.now() - startTime)
       
         ## fileds interpolated from open-sea cells :
-        triT, nanmaskT = compute_tri_and_mask(oce.WFOSICOR.isel(time=ll), lonT*aa, latT, nandrop=True)
+        triT, nanmaskT = compute_tri_and_mask(oce.WFOCORR.isel(time=ll), lonT*aa, latT, nandrop=True)
 
-        tzz = mp.horizontal_interp_tri( triT, nanmaskT, latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.WFOSICOR.isel(time=ll), \
+        tzz = mp.horizontal_interp_tri( triT, nanmaskT, latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.WFOCORR.isel(time=ll), \
                                     weight=openseafracT, skipna=True, filnocvx=filmis, threshold=epsfr )
         tzz[ np.isnan(tzz) | domcond ] = missval
-        dsmiso3d['wfosicor'][ll,:,:] = tzz
+        dsmiso3d['wfocorr'][ll,:,:] = tzz
       
+        tzz = mp.horizontal_interp_tri( triT, nanmaskT, latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.WFOAT.isel(time=ll), \
+                                    weight=openseafracT, skipna=True, filnocvx=filmis, threshold=epsfr ) 
+        tzz[ np.isnan(tzz) | domcond ] = missval
+        dsmiso3d['wfoat'][ll,:,:] = tzz
+
         #tri for sea ice variable SICONC, SIVOL
         triT, nanmaskT = compute_tri_and_mask(oce.SICONC.isel(time=ll), lonT*aa, latT, nandrop=True)
 
@@ -458,6 +479,12 @@ for reg in tasks.keys():
                                     weight=openseafracT, skipna=True, filnocvx=filmis, threshold=epsfr )
         tzz[ np.isnan(tzz) | domcond ] = missval
         dsmiso3d['sivol'][ll,:,:] = tzz
+
+        tzz = mp.horizontal_interp( latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.FSITHERM.isel(time=ll), \
+                                    weight=openseafracT, skipna=True, filnocvx=filmis, threshold=epsfr )
+        tzz[ np.isnan(tzz) | domcond ] = missval
+        dsmiso3d['fsitherm'][ll,:,:] = tzz
+
       
         ## fileds interpolated from sea-ice cells :
       
@@ -475,10 +502,10 @@ for reg in tasks.keys():
         dsmiso3d['siv'][ll,:,:] = tzz
 
     ## fileds interpolated from ice-shelf cells :
-    dsmiso3d['ficeshelf'] = (["time", "latitude", "longitude"], np.float32(np.zeros((mtime,mlat,mlon)) + missval))
-    dsmiso3d['dydrflf']   = (["time", "latitude", "longitude"], np.float32(np.zeros((mtime,mlat,mlon)) + missval))
-    dsmiso3d['thdrflf']   = (["time", "latitude", "longitude"], np.float32(np.zeros((mtime,mlat,mlon)) + missval))
-    dsmiso3d['hadrflf']   = (["time", "latitude", "longitude"], np.float32(np.zeros((mtime,mlat,mlon)) + missval))
+    dsmiso3d['libmassbffl'] = (["time", cdlat, cdlon], np.float32(np.zeros((mtime,mlat,mlon)) + missval))
+    dsmiso3d['dydrflf']     = (["time", cdlat, cdlon], np.float32(np.zeros((mtime,mlat,mlon)) + missval))
+    dsmiso3d['thdrflf']     = (["time", cdlat, cdlon], np.float32(np.zeros((mtime,mlat,mlon)) + missval))
+    dsmiso3d['hadrflf']     = (["time", cdlat, cdlon], np.float32(np.zeros((mtime,mlat,mlon)) + missval))
     for ll in np.arange(mtime):
 
         ## fields interpolated from sea cells ( C/T grid ):
@@ -486,13 +513,13 @@ for reg in tasks.keys():
         print('2D interpolation open-sea and sea ice fields')
         print(datetime.now() - startTime)
       
-        #tri for ice shelf variable FICESHELF, DYDRFLF, THDRFLF, HADRFLF
-        triT, nanmaskT = compute_tri_and_mask(oce.FICESHELF.isel(time=ll), lonT*aa, latT, nandrop=True)
+        #tri for ice shelf variable LIBMASSBFFL, DYDRFLF, THDRFLF, HADRFLF
+        triT, nanmaskT = compute_tri_and_mask(oce.LIBMASSBFFL.isel(time=ll), lonT*aa, latT, nandrop=True)
         
-        tzz = mp.horizontal_interp_tri( triT, nanmaskT, latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.FICESHELF.isel(time=ll), \
+        tzz = mp.horizontal_interp_tri( triT, nanmaskT, latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.LIBMASSBFFL.isel(time=ll), \
                                     weight=oce.SFTFLF, skipna=True, filnocvx=filmis, threshold=epsfr )
         tzz[ np.isnan(tzz) | domcond ] = missval
-        dsmiso3d['ficeshelf'][ll,:,:] = tzz
+        dsmiso3d['libmassbffl'][ll,:,:] = tzz
       
         tzz = mp.horizontal_interp_tri( triT, nanmaskT, latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, oce.DYDRFLF.isel(time=ll), \
                                     weight=oce.SFTFLF, skipna=True, filnocvx=filmis, threshold=epsfr ) 
@@ -517,7 +544,7 @@ for reg in tasks.keys():
     tmp_SS = tmpxS.interp(z=dep_miso) / tmp_LEVT
     del tmpxS
     
-    dsmiso3d['so'] = (["time", "depth", "latitude", "longitude"], np.float32(np.zeros((mtime,mdep,mlat,mlon)) + missval))
+    dsmiso3d['so'] = (["time", cdlev, cdlat, cdlon], np.float32(np.zeros((mtime,mdep,mlat,mlon)) + missval))
     for ll in np.arange(mtime):
 
         ## fields interpolated from sea cells ( C/T grid ):
@@ -544,7 +571,7 @@ for reg in tasks.keys():
     tmp_TT = tmpxT.interp(z=dep_miso) / tmp_LEVT
     del tmpxT
 
-    dsmiso3d['thetao']   = (["time", "depth", "latitude", "longitude"], np.float32(np.zeros((mtime,mdep,mlat,mlon)) + missval))
+    dsmiso3d['thetao']   = (["time", cdlev, cdlat, cdlon], np.float32(np.zeros((mtime,mdep,mlat,mlon)) + missval))
 
     for ll in np.arange(mtime):
 
@@ -571,12 +598,12 @@ for reg in tasks.keys():
     tmpxU = LEVOFU*oce.UX
     tmp_UX = tmpxU.interp(z=dep_miso) / tmp_LEVU
     del tmpxU
-    dsmiso3d['uo']   = (["time", "depth", "latitude", "longitude"], np.float32(np.zeros((mtime,mdep,mlat,mlon)) + missval))
+    dsmiso3d['uo']   = (["time", cdlev, cdlat, cdlon], np.float32(np.zeros((mtime,mdep,mlat,mlon)) + missval))
     
     tmpxV = LEVOFV*oce.VY
     tmp_VY = tmpxV.interp(z=dep_miso) / tmp_LEVV
     del tmpxV
-    dsmiso3d['vo']   = (["time", "depth", "latitude", "longitude"], np.float32(np.zeros((mtime,mdep,mlat,mlon)) + missval))
+    dsmiso3d['vo']   = (["time", cdlev, cdlat, cdlon], np.float32(np.zeros((mtime,mdep,mlat,mlon)) + missval))
 
     print('3D interpolation UV fields')
     print(datetime.now() - startTime)
@@ -623,7 +650,7 @@ for reg in tasks.keys():
                      original_min_lon=oce.attrs.get('original_minlon'),original_max_lon=oce.attrs.get('original_maxlon'),\
                      metadata=metadata)
     
-    file_miso3d = 'Oce3d_'+model+'-'+institute+'_'+abc+'_'+exp+'_'+period+'.nc'
+    file_miso3d = 'Oce3d_'+institute+'_'+model+'_'+abc+'_'+exp+'_'+period+'.nc'
     
     print('Creating ',file_miso3d)
     dsmiso3d.to_netcdf(file_miso3d,unlimited_dims="time")
@@ -694,12 +721,12 @@ for reg in tasks.keys():
         
         dssect = xr.Dataset(
             {
-            "levof":     (["depth", "x"], np.float32(LEVOF_sect)),
-            "longitude": (["x"], np.float32(lon_sect1d)),
-            "latitude": (["x"], np.float32(lat_sect1d)),
+            "levof":     ([cdlev, "x"], np.float32(LEVOF_sect)),
+            cdlon: (["x"], np.float32(lon_sect1d)),
+            cdlat: (["x"], np.float32(lat_sect1d)),
             },
             coords={
-            "depth": np.float32(dep_sect),
+            cdlev: np.float32(dep_sect),
             "time": oce.time.values
             },
         )
@@ -708,7 +735,7 @@ for reg in tasks.keys():
         tmpxS = LEVOFT*oce.SO.where(cond_secT,drop=True)
         tmp_SS = tmpxS.interp(z=dep_sect) / tmp_LEVT
         del tmpxS
-        dssect['so']     = (["time", "depth", "x"], np.zeros((mtime,mdepsect,mlonlatsec)) + missval)
+        dssect['so']     = (["time", cdlev, "x"], np.zeros((mtime,mdepsect,mlonlatsec)) + missval)
 
         # horizontal interpolation
         print('Horizontal interpolation')
@@ -733,7 +760,7 @@ for reg in tasks.keys():
         tmpxT = LEVOFT*oce.THETAO.where(cond_secT,drop=True)
         tmp_TT = tmpxT.interp(z=dep_sect) / tmp_LEVT
         del tmpxT
-        dssect['thetao'] = (["time", "depth", "x"], np.zeros((mtime,mdepsect,mlonlatsec)) + missval)
+        dssect['thetao'] = (["time", cdlev, "x"], np.zeros((mtime,mdepsect,mlonlatsec)) + missval)
         
         # horizontal interpolation
         for ll in np.arange(mtime):
@@ -765,7 +792,7 @@ for reg in tasks.keys():
                          original_min_lon=oce.attrs.get('original_minlon'),original_max_lon=oce.attrs.get('original_maxlon'),\
                          metadata=metadata)
         
-        file_sect = 'OceSec'+str(sec)+'_'+model+'-'+institute+'_'+abc+'_'+exp+'_'+period+'.nc'
+        file_sect = 'OceSec'+str(sec)+'_'+institute+'_'+model+'_'+abc+'_'+exp+'_'+period+'.nc'
         
         print('Creating ',file_sect)
         dssect.to_netcdf(file_sect,unlimited_dims="time")
@@ -867,12 +894,12 @@ for reg in tasks.keys():
             
             dsmoor = xr.Dataset(
                 {
-                "so":        (["time", "depth"], np.float32(SO_moor)),
-                "thetao":    (["time", "depth"], np.float32(THETAO_moor)),
-                "levof":     (["depth"], np.float32(LEVOF_moor)),
+                "so":        (["time", cdlev], np.float32(SO_moor)),
+                "thetao":    (["time", cdlev], np.float32(THETAO_moor)),
+                "levof":     ([cdlev], np.float32(LEVOF_moor)),
                 },
                 coords={
-                "depth": np.float32(dep_moor),
+                cdlev: np.float32(dep_moor),
                 "time": oce.time.values
                 },
             )
@@ -886,7 +913,7 @@ for reg in tasks.keys():
             dsmoor.attrs['mooring_longitude'] = np.float32(lon_moor0d)
             dsmoor.attrs['mooring_latitude'] = np.float32(lat_moor0d)
             
-            file_moor = 'OceMoor'+str(moor)+'_'+model+'-'+institute+'_'+abc+'_'+exp+'_'+period+'.nc'
+            file_moor = 'OceMoor'+str(moor)+'_'+institute+'_'+model+'_'+abc+'_'+exp+'_'+period+'.nc'
             
             print('Creating ',file_moor)
             dsmoor.to_netcdf(file_moor,unlimited_dims="time")

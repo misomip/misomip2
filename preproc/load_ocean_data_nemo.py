@@ -145,6 +145,9 @@ def load_oce_mod_nemo(file_mesh_mask='mesh_mask.nc',\
    LEVOFU = maskU*100.0
    LEVOFV = maskV*100.0
 
+   # Ocean fraction at surface:
+   SFTOF = LEVOFT.isel(z=0) 
+
    # 2d ice-shelf fractoin:
    SFTFLF = ncM.misf*1.e0
    SFTFLF = SFTFLF.where( (SFTFLF > 1.5), 0.e0 )
@@ -300,14 +303,43 @@ def load_oce_mod_nemo(file_mesh_mask='mesh_mask.nc',\
      print('    WARNING :   No data found for MSFTBAROT  -->  filled with NaNs')
      MSFTBAROT = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'y', 'x'] )
 
+   # Water Mass Flux Into Seawater From Land Ice [kg m−2 s−1, positive downward (ie into sea water)]
+   lisf = ( ("fwfisf" in ncS.data_vars) or ( "sowflisf_cav" in ncS.data_vars ) )
+   licb = ("berg_melt" in ncS.data_vars)
+   lrnf = ("sornf" in ncS.data_vars)
+   FLANDICE = xr.DataArray( np.zeros((mtime,my,mx)), dims=['time', 'y', 'x'] )
+   if ( lisf or licb or lrnf ) :
+     if ( lisf ):
+       if ("fwfisf" in ncS.data_vars):
+         FLANDICE = FLANDICE - ncS.fwfisf
+       elif ( "sowflisf_cav" in ncS.data_vars ):
+         FLANDICE = FLANDICE - ncS.sowflisf_cav
+     if ( licb ): 
+       FLANDICE = FLANDICE + ncS.berg_melt
+     if ( lrnf ):
+       FLANDICE = FLANDICE + ncS.sornf
+   else:
+     print('    WARNING :   No data found for FLANDICE  -->  filled with NaNs')
+     FLANDICE = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'y', 'x'] )
+
+   # Water Mass Flux Into Seawater Due to Sea Ice Thermodynamics [kg m-2 s-1, positive for actual melting]
+   if ( "vfxice" in ncI.data_vars ):
+     FSITHERM = ncI.vfxice
+     if ( "m/day" == ncI.vfxice.attrs["units"] ):
+        print ('WARNING: units of vfxice is m/day, we convert to kg/m2/s assume m eqw')
+        FSITHERM = ncI.vfxice / 86400.0 * 1000.0
+   else:
+     print('    WARNING :   No data found for FSITHERM  -->  filled with NaNs')
+     FSITHERM = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'y', 'x'] )
+
    # ice shelf melt [kg m-2 s-1, positive for actual melting] :
    if ( "fwfisf" in ncS.data_vars ):
-     FICESHELF = ncS.fwfisf*(-1)
+     LIBMASSBFFL = ncS.fwfisf*(-1)
    elif ( "sowflisf_cav" in ncS.data_vars ):
-     FICESHELF = ncS.sowflisf_cav*(-1)
+     LIBMASSBFFL = ncS.sowflisf_cav*(-1)
    else:
-     print('    WARNING :   No data found for FICESHELF  -->  filled with NaNs')
-     FICESHELF = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'y', 'x'] )
+     print('    WARNING :   No data found for LIBMASSBFFL  -->  filled with NaNs')
+     LIBMASSBFFL = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'y', 'x'] )
 
    # ice shelf dynamical driving (heat exchange velocity) [m s-1]:
    if ( "isfgammat" in ncS.data_vars ):
@@ -373,39 +405,42 @@ def load_oce_mod_nemo(file_mesh_mask='mesh_mask.nc',\
 
    # Total heat flux received by the ocean surface (including ice-shelf/ocean interface) [W m-2] 
    # see Griffies et al. (2016, section K4-K5) NB: here, including correction if any unlike Griffies (to avoid 2 variables)
+   # qisf is 'into sea water' (AMU)
+   # qoceisf_cav is 'out sea water' (eORCA025)
    if ( ("qt_oce" in ncS.data_vars) & ("qisf" in ncS.data_vars) ):
-     HFDS = ncS.qt_oce + ncS.qisf # ice-shelf heat flux not included in qt_oce in tested NEMO versions
+     HFS = ncS.qt_oce + ncS.qisf # ice-shelf heat flux not included in qt_oce in tested NEMO versions
    elif ( ("sohefldo" in ncS.data_vars) & ("qoceisf_cav" in ncS.data_vars) ):
-     HFDS = ncS.sohefldo + ncS.qoceisf_cav # not included in sohefldo in tested NEMO versions
+     HFS = ncS.sohefldo - ncS.qoceisf_cav # not included in sohefldo in tested NEMO versions
    else:
-     print('    WARNING :   No data found for HFDS  -->  filled with NaNs')
-     HFDS = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'y', 'x'] )
+     print('    WARNING :   No data found for HFS  -->  filled with NaNs')
+     HFS = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'y', 'x'] )
 
-   # Water flux entering the ocean due to sea-ice (melting-freezing) and surface correction (SSS restoring)
-   # (= fsitherm + wfocorr in Griffies 2016 section K2) [kg m-2 s-1]
-   if ( ("erp" in ncS.data_vars) & ("saltflx" in ncS.data_vars) ):
-     WFOSICOR = ncS.erp.where( (np.abs(ncS.erp)<1.e2) & (maskT.isel(z=0) == 1), 0.e0 ) - ncS.saltflx.where( (maskT.isel(z=0) == 1), 0.e0 ) \
-                / SS.isel(z=0).where( (maskT.isel(z=0) == 1), 1.e0 ) # NB: saltflx unit attribute is wrong in nico's output, it is actually in [1e-3 kg m-2 s-1]
-   elif ( ("erp" in ncS.data_vars) & ("sfx" in ncI.data_vars) ):
-     WFOSICOR = ncS.erp.where( (np.abs(ncS.erp)<1.e2) & (maskT.isel(z=0) == 1), 0.e0 ) - ncI.sfx.where( (maskT.isel(z=0) == 1), 0.e0 )/86400.0 \
-                / SS.isel(z=0).where( (maskT.isel(z=0) == 1), 1.e0 )
-   elif ( ("sowafld" in ncS.data_vars) & ("sosfldow" in ncS.data_vars) ):
-     WFOSICOR = ncS.sowafld.where( (np.abs(ncS.sowafld)<1.e2) & (maskT.isel(z=0) == 1), 0.e0 ) - ncS.sosfldow.where( (maskT.isel(z=0) == 1), 0.e0 ) \
-                / SS.isel(z=0).where( (maskT.isel(z=0) == 1), 1.e0 )
+   # Water flux entering the ocean due to surface correction (SSS restoring)
+   # (= wfocorr in Griffies 2016 section K2) [kg m-2 s-1]
+   # - because erp is out_of_sea_water instead of 'Into' in the data request
+   if ("erp" in ncS.data_vars):
+     WFOCORR = - ncS.erp.where( (np.abs(ncS.erp)<1.e2) & (maskT.isel(z=0) == 1), 0.e0 )
+   elif ("sowafld" in ncS.data_vars):
+     WFOCORR = - ncS.sowafld.where( (np.abs(ncS.sowafld)<1.e2) & (maskT.isel(z=0) == 1), 0.e0 )
    else:
-     print('    WARNING :   No data found for WFOSICOR  -->  filled with NaNs')
-     WFOSICOR = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'y', 'x'] )
+     print('    WARNING :   No data found for WFOCORR  -->  filled with NaNs')
+     WFOCORR = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'y', 'x'] )
 
    # Water flux entering the ocean due to rainfall, snowfall, condensation - evap, 
-   # river runoff, iceberg and ice-shelf melt [kg m-2 s-1]  
-   # (= pr+prs+evs+ficeberg+friver+ficeshelf in Griffies 2016, section K2)
-   if ( "empmr" in ncS.data_vars ):
-     WFOATRLI = - ncS.empmr + FICESHELF
+   # river runoff [kg m-2 s-1]  
+   # (= pr+prs+evs+friver in Griffies 2016, section K2)
+   # berg_mel included within empmr
+   if ( "empmr" in ncS.data_vars ) & ("berg_melt" in ncS.data_vars):
+     WFOAT = - ( ncS.empmr.where( (maskT.isel(z=0) == 1), 0.e0 ) + ncS.berg_melt.where( (maskT.isel(z=0) == 1), 0.e0 ) )
+   elif ( "sowaflup" in ncS.data_vars ) & ("berg_melt" in ncS.data_vars):
+     WFOAT = - ( ncS.sowaflup.where( (maskT.isel(z=0) == 1), 0.e0 ) + ncS.berg_melt.where( (maskT.isel(z=0) == 1), 0.e0 ) )
+   elif ( "empmr" in ncS.data_vars ):
+     WFOAT = - ncS.empmr.where( (maskT.isel(z=0) == 1), 0.e0 )
    elif ( "sowaflup" in ncS.data_vars ):
-     WFOATRLI = - ncS.sowaflup.where( (maskT.isel(z=0) == 1), 0.e0 ) - WFOSICOR + FICESHELF
+     WFOAT = - ncS.sowaflup.where( (maskT.isel(z=0) == 1), 0.e0 )
    else:
-     print('    WARNING :   No data found for WFOATRLI  -->  filled with NaNs')
-     WFOATRLI = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'y', 'x'] )
+     print('    WARNING :   No data found for WFOAT  -->  filled with NaNs')
+     WFOAT = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'y', 'x'] )
   
    #----------
    # Reduce the size of ocean dataset
@@ -472,21 +507,24 @@ def load_oce_mod_nemo(file_mesh_mask='mesh_mask.nc',\
        "ZOS":       (["time", "sxy"], np.reshape( ZOS.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "TOB":       (["time", "sxy"], np.reshape( TOB.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "SOB":       (["time", "sxy"], np.reshape( SOB.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
-       "FICESHELF": (["time", "sxy"], np.reshape( FICESHELF.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
+       "FLANDICE":  (["time", "sxy"], np.reshape( FLANDICE.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
+       "FSITHERM":  (["time", "sxy"], np.reshape( FSITHERM.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
+       "LIBMASSBFFL": (["time", "sxy"], np.reshape( LIBMASSBFFL.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "DYDRFLF":   (["time", "sxy"], np.reshape( DYDRFLF.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "THDRFLF":   (["time", "sxy"], np.reshape( THDRFLF.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "HADRFLF":   (["time", "sxy"], np.reshape( HADRFLF.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "MSFTBAROT": (["time", "sxy"], np.reshape( MSFTBAROT.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
-       "HFDS":      (["time", "sxy"], np.reshape( HFDS.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
-       "WFOATRLI":  (["time", "sxy"], np.reshape( WFOATRLI.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
-       "WFOSICOR":  (["time", "sxy"], np.reshape( WFOSICOR.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
+       "HFS":       (["time", "sxy"], np.reshape( HFS.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
+       "WFOAT":     (["time", "sxy"], np.reshape( WFOAT.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
+       "WFOCORR":   (["time", "sxy"], np.reshape( WFOCORR.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "SICONC":    (["time", "sxy"], np.reshape( SICONC.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "SIVOL":     (["time", "sxy"], np.reshape( SIVOL.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "SIUX":      (["time", "sxy"], np.reshape( SIUX.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "SIVY":      (["time", "sxy"], np.reshape( SIVY.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
-       "LEVOFT":     (["z", "sxy"], np.reshape( LEVOFT.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, (mz,nxy)) ),
-       "LEVOFU":     (["z", "sxy"], np.reshape( LEVOFU.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, (mz,nxy)) ),
-       "LEVOFV":     (["z", "sxy"], np.reshape( LEVOFV.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, (mz,nxy)) ),
+       "LEVOFT":    (["z", "sxy"], np.reshape( LEVOFT.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, (mz,nxy)) ),
+       "LEVOFU":    (["z", "sxy"], np.reshape( LEVOFU.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, (mz,nxy)) ),
+       "LEVOFV":    (["z", "sxy"], np.reshape( LEVOFV.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, (mz,nxy)) ),
+       "SFTOF":     (["sxy"], np.reshape( SFTOF.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, nxy) ),
        "SFTFLF":    (["sxy"], np.reshape( SFTFLF.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, nxy) ),
        "DEPFLF":    (["sxy"], np.reshape( DEPFLF.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, nxy) ),
        "DEPTHO":    (["sxy"], np.reshape( DEPTHO.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, nxy) ),
