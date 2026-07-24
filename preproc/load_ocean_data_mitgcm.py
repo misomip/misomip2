@@ -460,6 +460,8 @@ def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
    # IMPORTANT: assumes EXFroff is iceberg melt, not river runoff, so shouldn't count
    if ("oceFWflx" in ncSRF.data_vars) and not (FSITHERM.isnull().all()):
       WFOAT = ncSRF.oceFWflx - FSITHERM
+      if "EXFroff" in ncSRF.data_vars:
+         WFOAT -= ncSRF.EXFroff*1e3
    else:
      print('    WARNING :   No data found for WFOAT  -->  filled with NaNs')
      WFOAT = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'YC', 'XC'] )
