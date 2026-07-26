@@ -15,14 +15,11 @@ dir_model='./' #NEMO4.0-IGE-CNRS-UGA_a'
 
 for region in ['A', 'W']:
 
-   if ( region == 'A' ):
-      Nlev_Moor = 116
-   elif ( region == 'W' ):
-      Nlev_Moor = 116
-
    #-------------------------------
    # Moorings :
    Nmoor = 8
+   Nlev_Moor1 = 1151 # mooring output every 1m (as in the article)  
+   Nlev_Moor2 = 116  # mooring output every 10m (more convenient, accepted format)
    for kmoor in range(Nmoor):
       print('-----------------------------------------------')
       print('-----------------------------------------------')
@@ -32,8 +29,8 @@ for region in ['A', 'W']:
       ds = xr.open_dataset(file_mod)
       if not ( ( "lev" in ds.dims ) & ( "time" in ds.dims )):
          print('   Wrong dimensions: ',list(ds.dims)," should be ['lev', 'time']")
-      elif not ( ds.lev.size == Nlev_Moor ):
-         print("   Wrong size for dimension 'lev', should be "+str(Nlev_Moor))
+      elif not ( ( ds.lev.size == Nlev_Moor1 ) | ( ds.lev.size == Nlev_Moor2 ) ):
+         print("   Wrong size for dimension 'lev', should be either "+str(Nlev_Moor1)+" or "+str(Nlev_Moor2))
       for vv in [ "thetao", "so", "levof" ]:
          if not ( vv in ds.data_vars ):
             print('   Missing variable: '+vv)
