@@ -21,6 +21,7 @@ import os
 from datetime import datetime
 
 startTime = datetime.now()
+print(startTime)
 
 np.seterr(divide='ignore', invalid='ignore') # to avoid warning due to divide by zero
 
@@ -161,6 +162,7 @@ else:
 
 #--------------------------------------------------------------------------
 # 2- Global attributes of output netcdf :
+print('def global attributes function',flush=True)
 
 def put_global_attrs(ds,experiment='TBD', avg_hor_res_73S=0.0, original_sim_name='TBD', ocean_model='TBD', institute='TBD', \
                      original_min_lat=-90.0, original_max_lat=90.0, original_min_lon=-180.0, original_max_lon=180.0):
@@ -224,7 +226,7 @@ def put_global_attrs(ds,experiment='TBD', avg_hor_res_73S=0.0, original_sim_name
 
 #--------------------------------------------------------------------------
 # 3a- Interpolate to common 3d grid :
-
+print('interpolate to common 3d grid',flush=True)
 
 # Characteristics of MISOMIP 3d grid:
 [lon_miso,lat_miso,dep_miso] = mp.generate_3d_grid_oce(region=reg)
@@ -303,10 +305,13 @@ tmp_LEVV = LEVOFV.interp(z=dep_miso)
 
 LEVOF_miso = np.zeros((mdep,mlat,mlon))
 for kk in np.arange(mdep):
+  print(f"\rDepth {kk+1}/{mdep} ({100*(kk+1)/mdep:.1f}%)",end="", flush=True)
   tzz = mp.horizontal_interp( latT, lonT*aa, mlat, mlon, lat_miso1d, lon_miso1d*aa, tmp_LEVT[kk,:] )
   tzz[ np.isnan(DOMMSK_miso) ] = np.nan # will update to missval at the end of the calculation
   LEVOF_miso[kk,:,:] = tzz
+print()
 
+print('begin vertical interp of fields',flush=True)
 # vertical interpolation of T, S, U, V to common vertical grid :
 
 tmpxS = LEVOFT*oce.SO
@@ -322,6 +327,7 @@ tmpxV = LEVOFV*oce.VY
 tmp_VY = tmpxV.interp(z=dep_miso) / tmp_LEVV
 
 #----- interpolation of time-varying fields:
+print('interpolation of time-varying fields',flush=True)
 
 SO_miso     = np.zeros((mtime,mdep,mlat,mlon)) + missval
 THETAO_miso = np.zeros((mtime,mdep,mlat,mlon)) + missval
@@ -350,6 +356,7 @@ TAUVO_miso = np.zeros((mtime,mlat,mlon)) + missval
 domcond = (np.isnan(DOMMSK_miso))
 
 for ll in np.arange(mtime):
+  print(f"\r{ll+1}/{mtime}  Time: {datetime.now():%H:%M:%S}",end="", flush=True)
 
   ## fields interpolated from sea cells ( C/T grid ):
 
@@ -491,6 +498,7 @@ DEPTHO_miso[ np.isnan(DOMMSK_miso) | (DEPTHO_miso==0.) ] = missval
 
 #--------------------------------------------------------------------------
 # 3b- Create new xarray dataset and save to netcdf
+print('making new xarray dataset',flush=True)
 
 dsmiso3d = xr.Dataset(
     {
