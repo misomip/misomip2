@@ -68,3 +68,61 @@ def download_from_zenodo(zenodo_ID,experiment,output_dir='.'):
           break
 
     return ins, mod
+
+
+#===================================================================================
+def download_MIPkit_from_zenodo(region,output_dir='.'):
+    """
+    Download a full Zenodo repository for a given MIPkit dataset
+
+    Args:
+      region [string]: 'A' (Amundsen) or 'W' (Weddell)
+      output_dir [string]: directory in which we download the MIPkit data
+
+    Returns:
+      Download files and returns 0 if several files in the dataset
+
+    Example:
+      status = download_MIPkit_from_zenodo(region='A',output_dir='MIPkit/MIPkit-A')
+
+    """
+
+    if region == 'A':
+       doi = '10.5281/zenodo.10062355' # latest version
+    elif region == 'W':
+       doi = '10.5281/zenodo.8316180' # latest version
+
+    # create output directory if it does not exist
+    Path(output_dir).mkdir(parents=True, exist_ok=True)
+
+    # get file list:
+    filelist=[]
+    zg.download(record_or_doi=doi,output_dir='.',file_glob="Oce*.nc",md5=True)
+    with open("md5sums.txt", "r", encoding="ascii") as file:
+      for line in file:
+          filelist.append(line.strip().split('  ', 1)[1])
+    Nfiles=len(filelist)
+    print(Nfiles,' files for MIPkit-'+region)
+    Path("md5sums.txt").unlink() # delete file
+
+    # download all files (tries several times as can failed with poor connections):
+    for ktry in range(10):
+       dodnl = False
+       for file in filelist:
+          file_path = Path(output_dir+'/'+file)
+          if not file_path.is_file():
+             dodnl = True
+             print('   Missing file: ',file,'  >>>>>> starting or completing file download...')
+       if dodnl:
+          # Only download files that are not already there (use start_fresh=True to dowload from scratch):
+          zg.download(record_or_doi=doi,output_dir=output_dir,file_glob="Oce*.nc",start_fresh=False,continue_on_error=True)
+       else:
+          #nico: I did not find a simple way to check that all downloads are complete, so next step to have more chance that this is the case...
+          print('   All files are there, running a last download to complete potential unseccessful dowloads')
+          zg.download(record_or_doi=doi,output_dir=output_dir,file_glob="Oce*.nc",start_fresh=False,continue_on_error=True)
+          break
+
+    if Nfiles > 0:
+      return 0
+    else:
+      return -1
