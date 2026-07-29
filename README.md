@@ -11,10 +11,13 @@ This repo includes:
 * **analysis** : (TO BE COMPLETED) will contain scripts used to analyse multiple model outputs that were previously interpolated to the common grids ([More details here](https://github.com/nicojourdain/misomip2/tree/master/analysis/README.md)).
 
 ### Contributors
-* Nicolas C. Jourdain (IGE, CNRS-UGA, Grenoble, France)
-* Jan De Rydt (University Northumbria Newcastle, UK)
-* Yoshihiro Nakayama (Hokkaido University, Japan)
-* Ole Richter (Alfred Wegener Institute, Germany)
+* Nicolas C. Jourdain (IGE, CNRS-UGA, France)
+* Jan De Rydt (UNN, UK)
+* Pierre Mathiot (IGE, CNRS-UGA, France)
+* David Gwyther (UQ, Australia)
+* Kaitlin Naughten (BAS, UK)
+* Yoshihiro Nakayama (Hokkaido Univ., Japan)
+* Ole Richter (AWI, Germany)
 
 All MISOMIP participants who want to contribute to this repo are invited to fork this github repo and make a pull request as [documented here](https://opensource.com/article/19/7/create-pull-request-github).
 
