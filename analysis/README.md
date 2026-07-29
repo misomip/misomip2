@@ -35,6 +35,13 @@ vi get_and_check_ocean_all.py # or any similar editor
 python get_and_check_ocean_all.py
 ```
 
+### Download the ocean datasets in MIPkit-A and MIPkit-W
+
+This will download the latest version of both datasets:
+```
+python get_all_latest_MIPkit_ocean_data.py
+```
+
 ### Making ocean plots for all models
 
 **TO BE COMPLETED**
