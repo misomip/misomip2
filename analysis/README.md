@@ -44,4 +44,9 @@ python get_all_latest_MIPkit_ocean_data.py
 
 ### Making ocean plots for all models
 
+All these scripts put plots iin the ./figure directory.
+
+* **plot_all_moorings_time_avg.py** : compare available model simulations to mean observed mooring data
+
+
 **TO BE COMPLETED**
