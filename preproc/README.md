@@ -1,10 +1,13 @@
 # Preprocessing
 Contains functions that facilitate interpolation and formatting to the MISOMIP2 standards.
 
-To use the preprocessing tools, start by specifying this at the beginning of your python script:
-```bash
+To use the preprocessing tools in another directory, you may need to put something like this in your scripts:
+```
+import sys
+sys.path.append("/Users/whoever/whereever") # or update and export PYTHONPATH
 import misomip2.preproc as mp
 ```
+
 <br/><br/>
 
 To generate the standard MISOMIP2 [lon,lat,depth] grids, use one of these fucntions:
