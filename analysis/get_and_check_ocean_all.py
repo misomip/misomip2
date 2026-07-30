@@ -25,7 +25,7 @@ for zID in zenodo_ID_list:
          reg='A'
       elif ( ( exp[0:6] == 'OceanW' ) | ( exp[0:9] == 'IceOceanW' ) ):
          reg='W'
-      else
+      else:
          reg='X'
  
       # Check all file name and existence:
