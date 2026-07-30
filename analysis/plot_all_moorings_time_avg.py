@@ -9,8 +9,8 @@ from pathlib import Path
 dir_MIPkit = './MIPkit' # contains MIPkit-A and MIPkit-W
 dir_models = './DATA' # contains all the model netcdf files
 
-mod    = ['NEMO4.0'      , 'NEMO4.0'      ]
-inst   = ['IGE-CNRS-UGA' , 'IGE-CNRS-UGA' ]
+mod    = ['NEMO4.0'      , 'MITgcm'       ]
+inst   = ['IGE-CNRS-UGA' , 'UCLA-UMD'     ]
 mcolor = ['tab:blue'     , 'tab:orange'   ]
 Nmod = len(mod)
 

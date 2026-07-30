@@ -2,9 +2,10 @@ from check_utils import check_files
 from check_utils import check_dims_vars_attrs
 from download_utils import download_from_zenodo
 
-# list the ID of all Zenodo submissions (number in the url):
+# list the ID of all Zenodo submissions (number in the url, https://zenodo.org/records/xxxxxxxx):
 zenodo_ID_list = [
-'21511729' # Pierre Mathiot, NEMO4 : https://zenodo.org/records/21511729
+'21511729', # IGE-CNRS-UGA NEMO4.0
+'21626519'  # UCLA-UMD     MITgcm
 ]
 
 # directory in which downloaded netcdf files are stored:
