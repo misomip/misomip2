@@ -3,18 +3,11 @@ import xarray as xr
 import matplotlib.pyplot as plt
 import glob
 from pathlib import Path
+from def_mod_list import define_models
 
-#================================================================
-
-dir_MIPkit = './MIPkit' # contains MIPkit-A and MIPkit-W
-dir_models = './DATA' # contains all the model netcdf files
-
-mod    = ['NEMO4.0'      , 'MITgcm'       ]
-inst   = ['IGE-CNRS-UGA' , 'UCLA-UMD'     ]
-mcolor = ['tab:blue'     , 'tab:orange'   ]
+# import model list, institute name and colors:
+dir_MIPkit,dir_models,mod,inst,mcolor = define_models()
 Nmod = len(mod)
-
-#================================================================
 
 for region in ['A', 'W']:
 
@@ -69,12 +62,15 @@ for region in ['A', 'W']:
 
       for kmod in range(Nmod):
          
-         file_mod=glob.glob(dir_models+'/OceMoor'+IDmoor+'_'+inst[kmod]+'_'+mod[kmod]+'_a_Ocean'+region+'-hind_*.nc')[0]
-         print(file_mod)
-         ds_mod = xr.open_dataset(file_mod)
-         Tmod_mean = ds_mod.thetao.sel(time=slice(date_obs_beg,date_obs_end)).mean('time')
- 
-         axs[kmoor].plot(Tmod_mean,ds_mod.lev,linewidth=1.6,color=mcolor[kmod],zorder=kmoor*1.0/Nmoor)
+         file_mod=glob.glob(dir_models+'/OceMoor'+IDmoor+'_'+inst[kmod]+'_'+mod[kmod]+'_a_Ocean'+region+'-hind_*.nc')
+         if not file_mod:
+            print('WARNING: NO INPUT FILE FOR ','OceMoor'+IDmoor+'_'+inst[kmod]+'_'+mod[kmod]+'_a_Ocean'+region+'-hind')
+         else:
+            file_mod=file_mod[0]
+            print(file_mod)
+            ds_mod = xr.open_dataset(file_mod)
+            Tmod_mean = ds_mod.thetao.sel(time=slice(date_obs_beg,date_obs_end)).mean('time')
+            axs[kmoor].plot(Tmod_mean,ds_mod.lev,linewidth=1.8,color=mcolor[kmod],zorder=kmoor*1.0/Nmoor)
    
    # customized legend:
    axs[Nmoor].fill([0,1,1,0,0],[0,0,1,1,0],color='white',edgecolor=None)
@@ -85,7 +81,7 @@ for region in ['A', 'W']:
        axs[Nmoor].text(0.5,1.0,'Weddell Sea Moorings',fontsize=24,va='center',ha='center',fontweight='bold')
    axs[Nmoor].text(0.15,0.9,'Observations',fontsize=20,va='center',ha='left')
    for kmod in range(Nmod):
-      axs[Nmoor].plot([0,0.1],[0.8-0.1*kmod,0.8-0.1*kmod],linewidth=1.6,color=mcolor[kmod])
+      axs[Nmoor].plot([0,0.1],[0.8-0.1*kmod,0.8-0.1*kmod],linewidth=1.8,color=mcolor[kmod])
       axs[Nmoor].text(0.15,0.8-0.1*kmod,inst[kmod]+'_'+mod[kmod]+'_a',fontsize=20,va='center',ha='left')
    for spine in axs[Nmoor].spines.values():
        spine.set_visible(False)

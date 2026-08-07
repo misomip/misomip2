@@ -85,24 +85,28 @@ def check_dims_vars_attrs(institute,model,dir_model,region):
     Nlev_Moor2 = 116  # mooring output every 10m (more convenient, accepted format)
     for kmoor in range(Nmoor):
        IDmoor = str(kmoor+1)
-       file_mod=glob.glob(dir_model+'/OceMoor'+IDmoor+'_'+institute+'_'+model+'_?_Ocean'+region+'-hind_*.nc')[0]
-       print(file_mod)
-       ds = xr.open_dataset(file_mod)
-       if not ( ( "lev" in ds.dims ) & ( "time" in ds.dims )):
-          print('   Wrong dimensions: ',list(ds.dims)," should be ['lev', 'time'] (in any order)")
-          nerr = nerr + 1
-       elif not ( ( ds.lev.size == Nlev_Moor1 ) | ( ds.lev.size == Nlev_Moor2 ) ):
-          print("   Wrong size for dimension 'lev', should be either "+str(Nlev_Moor1)+" or "+str(Nlev_Moor2))
-          nerr = nerr + 1
-       for vv in [ "thetao", "so", "levof" ]:
-          if not ( vv in ds.data_vars ):
-             print('   Missing variable: '+vv)
+       file_mod=glob.glob(dir_model+'/OceMoor'+IDmoor+'_'+institute+'_'+model+'_?_Ocean'+region+'-hind_*.nc')
+       if not file_mod:
+          print('WARNING: NO FILE FOR MOORING ',IDmoor)
+       else:
+          file_mod=file_mod[0]
+          print(file_mod)
+          ds = xr.open_dataset(file_mod)
+          if not ( ( "lev" in ds.dims ) & ( "time" in ds.dims )):
+             print('   Wrong dimensions: ',list(ds.dims)," should be ['lev', 'time'] (in any order)")
              nerr = nerr + 1
-          else:
-             for aa in [ "units", "long_name", "cell_methods" ]:
-                if not ( aa in ds[vv].attrs ):
-                   print("   Variable '",vv,"' ->  Missing attribute : ",aa)
-                   nerr = nerr + 1
+          elif not ( ( ds.lev.size == Nlev_Moor1 ) | ( ds.lev.size == Nlev_Moor2 ) ):
+             print("   Wrong size for dimension 'lev', should be either "+str(Nlev_Moor1)+" or "+str(Nlev_Moor2))
+             nerr = nerr + 1
+          for vv in [ "thetao", "so", "levof" ]:
+             if not ( vv in ds.data_vars ):
+                print('   Missing variable: '+vv)
+                nerr = nerr + 1
+             else:
+                for aa in [ "units", "long_name", "cell_methods" ]:
+                   if not ( aa in ds[vv].attrs ):
+                      print("   Variable '",vv,"' ->  Missing attribute : ",aa)
+                      nerr = nerr + 1
  
     #-------------------------------
     # Sections :

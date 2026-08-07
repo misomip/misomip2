@@ -5,7 +5,10 @@ from download_utils import download_from_zenodo
 # list the ID of all Zenodo submissions (number in the url, https://zenodo.org/records/xxxxxxxx):
 zenodo_ID_list = [
 '21511729', # IGE-CNRS-UGA NEMO4.0
-'21626519'  # UCLA-UMD     MITgcm
+'21626519', # UCLA-UMD     MITgcm
+'21728621', # UTAS         ROMS
+'19568656', # AWI          FESOM2 (Amundsen)
+'21452420'  # AWI          FESOM2 (Weddell)
 ]
 
 # directory in which downloaded netcdf files are stored:
@@ -16,7 +19,14 @@ experiment_list = ['OceanA-hind', 'OceanW-hind']
 
 for zID in zenodo_ID_list:
 
-   for exp in experiment_list:
+   if zID == '19568656':
+      experiment_list2 = ['OceanA-hind']
+   elif zID == '21452420':
+      experiment_list2 = ['OceanW-hind']
+   else:
+      experiment_list2 = experiment_list
+
+   for exp in experiment_list2:
 
       # Download files:
       inst, mod = download_from_zenodo(zenodo_ID=zID,experiment=exp,output_dir=dir_nc)
