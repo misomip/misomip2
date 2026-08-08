@@ -52,4 +52,10 @@ python plot_all_moorings_time_avg.py
 ls -al figures/Moorings_*_mean_profiles_MISOMIP2.*
 ```
 
+To compare available model simulations to all observed vertical sections:
+```
+python plot_thetao_all_sections.py
+ls -al figures/Section*_MISOMIP2.*
+```
+
 **TO BE COMPLETED**
