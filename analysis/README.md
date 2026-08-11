@@ -44,7 +44,7 @@ python get_all_latest_MIPkit_ocean_data.py
 
 ### Making ocean plots for all models
 
-All these scripts put plots iin the ./figure directory.
+The following scripts put plots in the ./figure directory.
 
 To compare available model simulations to mean observed mooring data:
 ```
@@ -57,5 +57,12 @@ To compare available model simulations to all observed vertical sections:
 python plot_thetao_all_sections.py
 ls -al figures/Section*_MISOMIP2.*
 ```
+
+To download and interpolate masks of individual ice shelf drainage basins:
+```
+python get_and_interpolate_ice_shelf_mask.py
+ls -al DATA/Mask_Ice_Shelves_*.nc 
+```
+
 
 **TO BE COMPLETED**
