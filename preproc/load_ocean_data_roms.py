@@ -260,12 +260,23 @@ def load_oce_mod_roms(files_T='ROMS_all.nc',\
      print('    WARNING :   No data found for MSFTBAROT  -->  filled with NaNs')
      MSFTBAROT = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'eta_u', 'xi_u'] )
 
+   # Water Mass Flux Into Seawater From Land Ice [kg m−2 s−1, positive downward (ie into sea water)]
+     print('    WARNING :   No data found for FLANDICE  -->  filled with NaNs')
+     FLANDICE = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'eta_rho', 'xi_rho'] )
+
+   # Water Mass Flux Into Seawater Due to Sea Ice Thermodynamics [kg m-2 s-1, positive for actual melting]
+   if ( "vfxice" in ncT.data_vars ):
+     FSITHERM = ncI.vfxice
+   else:
+     print('    WARNING :   No data found for FSITHERM  -->  filled with NaNs')
+     FSITHERM = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'eta_rho', 'xi_rho'] )
+
    # ice shelf melt [kg m-2 s-1, positive for actual melting] :
    if ( "m" in ncT.data_vars ):
-     FICESHELF = ncT.m*920.0
+     LIBMASSBFFL = ncT.m*920.0
    else:
-     print('    WARNING :   No data found for FICESHELF  -->  filled with NaNs')
-     FICESHELF = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'eta_rho', 'xi_rho'] )
+     print('    WARNING :   No data found for LIBMASSBFFL  -->  filled with NaNs')
+     LIBMASSBFFL = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'eta_rho', 'xi_rho'] )
 
    # ice shelf dynamical driving (heat exchange velocity) [m s-1]:
    if ( "isfgammat" in ncT.data_vars ):
@@ -326,10 +337,10 @@ def load_oce_mod_roms(files_T='ROMS_all.nc',\
    # Total heat flux received by the ocean surface (including ice-shelf/ocean interface) [W m-2] 
    # see Griffies et al. (2016, section K4-K5) NB: here, including correction if any unlike Griffies (to avoid 2 variables)
    if ( "qt_oce" in ncSRF.data_vars ):
-     HFDS = ncSRF.qt_oce
+     HFS = ncSRF.qt_oce
    else:
-     print('    WARNING :   No data found for HFDS  -->  filled with NaNs')
-     HFDS = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'eta_rho', 'xi_rho'] )
+     print('    WARNING :   No data found for HFS  -->  filled with NaNs')
+     HFS = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'eta_rho', 'xi_rho'] )
 
    # Water flux entering the ocean due to sea-ice (melting-freezing) and surface correction (SSS restoring)
    # (= fsitherm + wfocorr in Griffies 2016 section K2) [kg m-2 s-1]
@@ -347,10 +358,10 @@ def load_oce_mod_roms(files_T='ROMS_all.nc',\
    # river runoff, iceberg and ice-shelf melt [kg m-2 s-1]  
    # (= pr+prs+evs+ficeberg+friver+ficeshelf in Griffies 2016, section K2)
    if ( "empmr" in ncSRF.data_vars ):
-     WFOATRLI = - ncSRF.empmr + FICESHELF
+     WFOAT = - ncSRF.empmr + LIBMASSBFFL
    else:
-     print('    WARNING :   No data found for WFOATRLI  -->  filled with NaNs')
-     WFOATRLI = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'eta_rho', 'xi_rho'] )
+     print('    WARNING :   No data found for WFOAT  -->  filled with NaNs')
+     WFOAT = xr.DataArray( np.zeros((mtime,my,mx))*np.nan, dims=['time', 'eta_rho', 'xi_rho'] )
   
    #----------
    # Reduce the size of ocean dataset
@@ -426,6 +437,11 @@ def load_oce_mod_roms(files_T='ROMS_all.nc',\
    LEVOFV = LEVOFV.where( ( (DepTUV==0.) & (DEPFLFV==0.) ) | ( (DEPTHOV>DepTUV) & (DEPFLFV<DepTUV) ), 0.e0 ) \
             * ncM.mask_v.isel(xi_v=slice(imin,imax+1),eta_v=slice(jmin,jmax+1))
 
+   ###
+   #  Calculate new variable
+   ###
+   # Ocean fraction at surface:
+   SFTOF = LEVOFT.isel(z=0)
    ZMODT = xr.DataArray( ztmp, dims=['s_rho', 'eta_rho', 'xi_rho'] )
    ZMODU = xr.DataArray( ztmp, dims=['s_rho', 'eta_u', 'xi_u'] )
    ZMODV = xr.DataArray( ztmp, dims=['s_rho', 'eta_v', 'xi_v'] )
@@ -520,14 +536,17 @@ def load_oce_mod_roms(files_T='ROMS_all.nc',\
        "ZOS":       (["time", "sxy"], np.reshape( ZOS.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "TOB":       (["time", "sxy"], np.reshape( TOB.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "SOB":       (["time", "sxy"], np.reshape( SOB.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
-       "FICESHELF": (["time", "sxy"], np.reshape( FICESHELF.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
+       "FLANDICE":  (["time", "sxy"], np.reshape( FLANDICE.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
+       "FSITHERM":  (["time", "sxy"], np.reshape( FSITHERM.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
+       "LIBMASSBFFL": (["time", "sxy"], np.reshape( LIBMASSBFFL.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "DYDRFLF":   (["time", "sxy"], np.reshape( DYDRFLF.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "THDRFLF":   (["time", "sxy"], np.reshape( THDRFLF.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "HADRFLF":   (["time", "sxy"], np.reshape( HADRFLF.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "MSFTBAROT": (["time", "sxy"], np.reshape( MSFTBAROT.isel(xi_u=slice(imin,imax+1),eta_u=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
-       "HFDS":      (["time", "sxy"], np.reshape( HFDS.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
-       "WFOATRLI":  (["time", "sxy"], np.reshape( WFOATRLI.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
+       "HFS":      (["time", "sxy"], np.reshape( HFS.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
+       "WFOAT":  (["time", "sxy"], np.reshape( WFOAT.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "WFOSICOR":  (["time", "sxy"], np.reshape( WFOSICOR.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
+       "WFOCORR":   (["time", "sxy"], np.reshape( WFOCORR.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "SICONC":    (["time", "sxy"], np.reshape( SICONC.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "SIVOL":     (["time", "sxy"], np.reshape( SIVOL.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
        "SIUX":      (["time", "sxy"], np.reshape( SIUX.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, (mtime,nxy)) ),
@@ -535,6 +554,8 @@ def load_oce_mod_roms(files_T='ROMS_all.nc',\
        "LEVOFT":    (["z", "sxy"], np.reshape( LEVOFT.values, (mz,nxy)) ),
        "LEVOFU":    (["z", "sxy"], np.reshape( LEVOFU.values, (mz,nxy)) ),
        "LEVOFV":    (["z", "sxy"], np.reshape( LEVOFV.values, (mz,nxy)) ),
+       "SFTOF":     (["sxy"], np.reshape( SFTOF.isel(x=slice(imin,imax+1),y=slice(jmin,jmax+1)).values, nxy) ),
+       "SFTOF":     (["sxy"], np.reshape( SFTOF.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, nxy) ),
        "SFTFLF":    (["sxy"], np.reshape( SFTFLF.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, nxy) ),
        "DEPFLF":    (["sxy"], np.reshape( DEPFLF.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, nxy) ),
        "DEPTHO":    (["sxy"], np.reshape( DEPTHO.isel(xi_rho=slice(imin,imax+1),eta_rho=slice(jmin,jmax+1)).values, nxy) ),

@@ -64,7 +64,7 @@ def add_standard_attributes_oce(ds,miss=9.969209968386869e36,verbose=False):
      ds.sftflf.attrs['_FillValue'] = miss
      ds.sftflf.attrs['units'] = '%'
      ds.sftflf.attrs['long_name'] = 'Floating Ice Shelf Area Percentage'
-     ds.sftflf.attrs['standard_name'] = 'floating\_ice\_shelf\_area\_fraction'
+     ds.sftflf.attrs['standard_name'] = 'floating_ice_shelf_area_fraction'
      ds.sftflf.attrs['cell_methods'] = 'area: mean'
 
   if ( "sftof" in ds.data_vars ):
@@ -72,7 +72,7 @@ def add_standard_attributes_oce(ds,miss=9.969209968386869e36,verbose=False):
      ds.sftof.attrs['_FillValue'] = miss
      ds.sftof.attrs['units'] = '%'
      ds.sftof.attrs['long_name'] = 'Sea Area Percentage at the Surface'
-     ds.sftof.attrs['standard_name'] = 'sea\_area\_fraction'
+     ds.sftof.attrs['standard_name'] = 'sea_area_fraction'
      ds.sftof.attrs['cell_methods'] = 'area: mean'
      ds.sftof.attrs['comment'] = 'Equals zero if sftflf is 100% (ice shelf) or if the cell is fully occupied by land, but 100% for a cell fully or partially covered with sea ice'
 
@@ -80,7 +80,7 @@ def add_standard_attributes_oce(ds,miss=9.969209968386869e36,verbose=False):
      if verbose: print('define attributes for variable levof')
      ds.levof.attrs['_FillValue'] = miss
      ds.levof.attrs['units'] = '%'
-     ds.levof.attrs['long_name'] = 'Sea area fraction at each vertical level'
+     ds.levof.attrs['long_name'] = 'Sea Area Fraction at Each Vertical Level'
      ds.levof.attrs['standard_name'] = 'TBD'
      ds.levof.attrs['cell_methods'] = 'area: mean'
 
@@ -242,7 +242,7 @@ def add_standard_attributes_oce(ds,miss=9.969209968386869e36,verbose=False):
      ds.libmassbffl.attrs['_FillValue'] = miss
      ds.libmassbffl.attrs['units'] = 'kg m-2 s-1'
      ds.libmassbffl.attrs['long_name'] = 'Basal Specific Mass Balance of Floating Ice Shelf'
-     ds.libmassbffl.attrs['standard_name'] = 'land\_ice\_basal\_specific\_mass\_balance\_flux'
+     ds.libmassbffl.attrs['standard_name'] = 'land_ice_basal_specific_mass_balance_flux'
      ds.libmassbffl.attrs['cell_methods'] = 'area: mean where ice shelf; time: monthly mean'
      ds.libmassbffl.attrs['comment'] = 'This differs from the ficeshelf term in Griffies et al. (2016), which was the net water mass flux into sea water from ice shelf, i.e. per unit of ocean area, while libmassbffl is per unit of ice-shelf area; positive for melting, negative for refreezing'
 
