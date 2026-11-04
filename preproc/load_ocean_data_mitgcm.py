@@ -16,7 +16,7 @@ def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
                         files_I='dummy',\
                         files_SRF='dummy',\
                         files_M='dummy',\
-                        rho0=1026.0, teos10=False, region='Amundsen', parallel=False, projection=None ):
+                        rho0=1026.0, teos10=False, region='Amundsen', parallel=False, projection=None, icb_file=None ):
    """ Read MITgcm outputs and define an xarray dataset containing 
        all variables required in MISOMIP2. It automatically detects
        whether coordinates are stereographic or lon-lat.
@@ -347,12 +347,27 @@ def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
    # Note no explicit representation of icebergs in MITgcm yet
    lisf = "SHIfwFlx" in ncT.data_vars
    lrnf = "EXFroff" in ncT.data_vars
+   licb = icb_file is not None
    FLANDICE = xr.DataArray( np.zeros((mtime,my,mx)), dims=['time', 'YC', 'XC'] )
-   if ( lisf or lrnf ):
+   if ( lisf or lrnf or licb ):
       if lisf:
-         FLANDICE -= ncT.SHIfwFlx
+         FLANDICE = FLANDICE - ncT.SHIfwFlx
       if lrnf:
-         FLANDICE += ncT.EXFroff*1e3  # Convert from m/s
+         FLANDICE = FLANDICE + ncT.EXFroff*1e3  # Convert from m/s
+      if licb:
+         # Read binary 3D iceberg meltwater file in kg/s
+         icb_data = np.fromfile(icb_file, dtype='>f8')
+         # Reshape into xyz field
+         icb_data = np.reshape(icb_data, [mz, my, mx])
+         # Sum over vertical
+         icb_data = np.sum(icb_data, axis=0)
+         # Now make it a DataArray
+         icb_data = xr.DataArray(icb_data, dims=['YC', 'XC'])
+         # Divide by area to convert to kg/m^2/s
+         icb_data = icb_data/(dxT*dyT)
+         # Broadcast to be constant in time
+         icb_data = xr.broadcast(icb_data, FLANDICE)[0]
+         FLANDICE = FLANDICE + icb_data
    else:
       print('    WARNING :   No data found for FLANDICE  -->  filled with NaNs')
       FLANDICE = FLANDICE.where(False)
@@ -548,7 +563,7 @@ def load_oce_mod_mitgcm(files_T='MITgcm_all.nc',\
        "LEVOFT":    (["z", "sxy"], np.reshape( LEVOFT.isel(XC=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, (mz,nxy)) ),
        "LEVOFU":    (["z", "sxy"], np.reshape( LEVOFU.isel(XG=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, (mz,nxy)) ),
        "LEVOFV":    (["z", "sxy"], np.reshape( LEVOFV.isel(XC=slice(imin,imax+1),YG=slice(jmin,jmax+1)).values, (mz,nxy)) ),
-       "SFTOF":     (["sxy"], np.reshape( SFTFOF.isel(XC=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, nxy) ),
+       "SFTOF":     (["sxy"], np.reshape( SFTOF.isel(XC=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, nxy) ),
        "SFTFLF":    (["sxy"], np.reshape( SFTFLF.isel(XC=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, nxy) ),
        "DEPFLF":    (["sxy"], np.reshape( DEPFLF.isel(XC=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, nxy) ),
        "DEPTHO":    (["sxy"], np.reshape( DEPTHO.isel(XC=slice(imin,imax+1),YC=slice(jmin,jmax+1)).values, nxy) ),
