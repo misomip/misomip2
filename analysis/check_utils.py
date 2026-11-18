@@ -4,7 +4,7 @@ import glob
 import sys
 
 #==================================================
-def check_files(institute,model,dir_model,region):
+def check_files(institute,model,dir_model,region,scenario='hind'):
     """
     Basic checks for MISOMIP2 ocean output file names.
 
@@ -13,12 +13,13 @@ def check_files(institute,model,dir_model,region):
        * model [string]: e.g. 'NEMO3.6'
        * dir_model [string]: directory in which are stored the netcdf files, e.g. './'
        * region [string]: 'A' (Amundsen) or 'W' (Weddell)
+       * scenario [string]: 'hind' (default), 'warm', ...
 
     Returns: 
        Nb of missing files (0 if all files there)
 
     Example:
-       status = check_files(institute='IGE-CNRS-UGA',model='NEMO3.6','./DATA',region='A')
+       status = check_files(institute='IGE-CNRS-UGA',model='NEMO3.6','./DATA',region='A',scenario='hind')
 
     """
 
@@ -27,10 +28,10 @@ def check_files(institute,model,dir_model,region):
     Nmoor = 8
     for kmoor in range(Nmoor):
        IDmoor = str(kmoor+1)
-       file_mod=glob.glob(dir_model+'/OceMoor'+IDmoor+'_'+institute+'_'+model+'_a_Ocean'+region+'-hind_*.nc')
+       file_mod=glob.glob(dir_model+'/OceMoor'+IDmoor+'_'+institute+'_'+model+'_a_Ocean'+region+'-'+scenario+'_*.nc')
        if not file_mod:
           print('Missing file for region',region,' and Mooring ',IDmoor)
-          print('  Expected: '+dir_model+'/OceMoor'+IDmoor+'_'+institute+'_'+model+'_a_Ocean'+region+'-hind_<period>.nc')
+          print('  Expected: '+dir_model+'/OceMoor'+IDmoor+'_'+institute+'_'+model+'_a_Ocean'+region+'-'+scenario+'_<period>.nc')
           nfile_miss = nfile_miss + 1
  
     if region == 'A':
@@ -39,16 +40,16 @@ def check_files(institute,model,dir_model,region):
        Nsec = 4
     for ksec in range(Nsec):
        IDsec = str(ksec+1)
-       file_mod=glob.glob(dir_model+'/OceSec'+IDsec+'_'+institute+'_'+model+'_a_Ocean'+region+'-hind_*.nc')
+       file_mod=glob.glob(dir_model+'/OceSec'+IDsec+'_'+institute+'_'+model+'_a_Ocean'+region+'-'+scenario+'_*.nc')
        if not file_mod:
           print('Missing file for region',region,' and Section ',IDsec)
-          print('  Expected: '+dir_model+'/OceSec'+IDsec+'_'+institute+'_'+model+'_a_Ocean'+region+'-hind_<period>.nc')
+          print('  Expected: '+dir_model+'/OceSec'+IDsec+'_'+institute+'_'+model+'_a_Ocean'+region+'-'+scenario+'_<period>.nc')
           nfile_miss = nfile_miss + 1
  
-    file_mod=glob.glob(dir_model+'/Oce3d_'+institute+'_'+model+'_a_Ocean'+region+'-hind_*.nc')
+    file_mod=glob.glob(dir_model+'/Oce3d_'+institute+'_'+model+'_a_Ocean'+region+'-'+scenario+'_*.nc')
     if not file_mod:
        print('Missing 3d ocean file for region',region)
-       print('  Expected: '+dir_model+'/Oce3d_'+institute+'_'+model+'_a_Ocean'+region+'-hind_<period>.nc')
+       print('  Expected: '+dir_model+'/Oce3d_'+institute+'_'+model+'_a_Ocean'+region+'-'+scenario+'_<period>.nc')
        nfile_miss = nfile_miss + 1
  
     print(' ')
@@ -58,7 +59,7 @@ def check_files(institute,model,dir_model,region):
 
 
 #==================================================
-def check_dims_vars_attrs(institute,model,dir_model,region):
+def check_dims_vars_attrs(institute,model,dir_model,region,scenario='hind'):
     """
     Basic checks for MISOMIP2 ocean outputs: dimensions and variable attributes.
 
@@ -67,12 +68,13 @@ def check_dims_vars_attrs(institute,model,dir_model,region):
        * model [string]: e.g. 'NEMO3.6'
        * dir_model [string]: directory in which are stored the netcdf files, e.g. '.'
        * region [string]: 'A' (Amundsen) or 'W' (Weddell)
+       * scenario [string]: 'hind' (default), 'warm', ...
 
     Returns: 
        Many prints and the number of errors
 
     Example:
-       status = check_dims_vars_attrs(institute='IGE-CNRS-UGA',model='NEMO3.6',dir_model='.',region='W')
+       status = check_dims_vars_attrs(institute='IGE-CNRS-UGA',model='NEMO3.6',dir_model='.',region='W',scenario='hind')
 
     """
 
@@ -85,7 +87,7 @@ def check_dims_vars_attrs(institute,model,dir_model,region):
     Nlev_Moor2 = 116  # mooring output every 10m (more convenient, accepted format)
     for kmoor in range(Nmoor):
        IDmoor = str(kmoor+1)
-       file_mod=glob.glob(dir_model+'/OceMoor'+IDmoor+'_'+institute+'_'+model+'_?_Ocean'+region+'-hind_*.nc')
+       file_mod=glob.glob(dir_model+'/OceMoor'+IDmoor+'_'+institute+'_'+model+'_?_Ocean'+region+'-'+scenario+'_*.nc')
        if not file_mod:
           print('WARNING: NO FILE FOR MOORING ',IDmoor)
        else:
@@ -116,7 +118,7 @@ def check_dims_vars_attrs(institute,model,dir_model,region):
        Nsec = 4
     for ksec in range(Nsec):
        IDsec = str(ksec+1)
-       file_mod=glob.glob(dir_model+'/OceSec'+IDsec+'_'+institute+'_'+model+'_?_Ocean'+region+'-hind_*.nc')[0]
+       file_mod=glob.glob(dir_model+'/OceSec'+IDsec+'_'+institute+'_'+model+'_?_Ocean'+region+'-'+scenario+'_*.nc')[0]
        print(file_mod)
        ds = xr.open_dataset(file_mod)
        if not ( ( "x" in ds.dims ) & ( "lev" in ds.dims ) & ( "time" in ds.dims )):
@@ -140,7 +142,7 @@ def check_dims_vars_attrs(institute,model,dir_model,region):
     else:
        mlon=271
        mlat=251
-    file_mod=glob.glob(dir_model+'/Oce3d_'+institute+'_'+model+'_?_Ocean'+region+'-hind_*.nc')[0]
+    file_mod=glob.glob(dir_model+'/Oce3d_'+institute+'_'+model+'_?_Ocean'+region+'-'+scenario+'_*.nc')[0]
     print(file_mod)
     ds = xr.open_dataset(file_mod)
     if not ( ( "lon" in ds.dims ) & ( "lat" in ds.dims ) & ( "lev" in ds.dims ) & ( "time" in ds.dims )):

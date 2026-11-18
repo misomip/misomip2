@@ -35,37 +35,45 @@ def download_from_zenodo(zenodo_ID,experiment,output_dir='.'):
     print(Nfiles,' files for experiment ',experiment,' in Zenodo record ',zenodo_ID)
     Path("md5sums.txt").unlink() # delete file
 
-    # get corresponding institute and model names:
-    parts = re.split('_', filelist[0])
-    ins = parts[1]
-    mod = parts[2]
-    if not parts[3] == 'a' :
-       print('ERROR: NEED TO ADAPT THE SCRIPTS FROM MORE THAN ONE REALISATION PER MODEL AND INSTITUTE')
-       exit()
-    if not parts[4] in ['OceanA-hind', 'OceanW-hind', 'OceanA-Pgeom', 'OceanW-Pgeom', 'OceanA-Fgeom', 'OceanW-Fgeom', 'OceanA-warm', 'OceanW-warm', \
-                        'IceOceanA-hind', 'IceOceanW-hind', 'IceOceanA-ctrl', 'IceOceanW-ctrl', 'IceOceanA-warm', 'IceOceanW-warm']:
-       print('ERROR: EXPERIMENT DOES NOT EXIST IN MISOMIP2')
-       exit()
+    if len(filelist) == 0:
 
-    print(mod,' ',ins,'   Zenodo record: ',zenodo_ID)
-    print('   ',Nfiles,' files for experiment ',experiment)
+       print('WARNING: No files for experiment '+experiment+' in directory '+output_dir)
+       ins='None'
+       mod='None'
 
-    # download all files (tries several times as can failed with poor connections):
-    for ktry in range(10):
-       dodnl = False
-       for file in filelist:
-          file_path = Path(output_dir+'/'+file) 
-          if not file_path.is_file():
-             dodnl = True
-             print('   Missing file: ',file,'  >>>>>> starting or completing file download...')
-       if dodnl:
-          # Only download files that are not already there (use start_fresh=True to dowload from scratch):
-          zg.download(record_or_doi=zenodo_ID,output_dir=output_dir,file_glob="*_"+experiment+"_*.nc",start_fresh=False,continue_on_error=True)
-       else:
-          #nico: I did not find a simple way to check that all downloads are complete, so next step to have more chance that this is the case...
-          print('   All files are there, running a last download to complete potential unseccessful dowloads')
-          zg.download(record_or_doi=zenodo_ID,output_dir=output_dir,file_glob="*_"+experiment+"_*.nc",start_fresh=False,continue_on_error=True)
-          break
+    else:
+
+       # get corresponding institute and model names:
+       parts = re.split('_', filelist[0])
+       ins = parts[1]
+       mod = parts[2]
+       if not parts[3] == 'a' :
+          print('ERROR: NEED TO ADAPT THE SCRIPTS FROM MORE THAN ONE REALISATION PER MODEL AND INSTITUTE')
+          exit()
+       if not parts[4] in ['OceanA-hind', 'OceanW-hind', 'OceanA-Pgeom', 'OceanW-Pgeom', 'OceanA-Fgeom', 'OceanW-Fgeom', 'OceanA-warm', 'OceanW-warm', \
+                           'IceOceanA-hind', 'IceOceanW-hind', 'IceOceanA-ctrl', 'IceOceanW-ctrl', 'IceOceanA-warm', 'IceOceanW-warm']:
+          print('ERROR: EXPERIMENT DOES NOT EXIST IN MISOMIP2')
+          exit()
+   
+       print(mod,' ',ins,'   Zenodo record: ',zenodo_ID)
+       print('   ',Nfiles,' files for experiment ',experiment)
+   
+       # download all files (tries several times as can failed with poor connections):
+       for ktry in range(10):
+          dodnl = False
+          for file in filelist:
+             file_path = Path(output_dir+'/'+file) 
+             if not file_path.is_file():
+                dodnl = True
+                print('   Missing file: ',file,'  >>>>>> starting or completing file download...')
+          if dodnl:
+             # Only download files that are not already there (use start_fresh=True to dowload from scratch):
+             zg.download(record_or_doi=zenodo_ID,output_dir=output_dir,file_glob="*_"+experiment+"_*.nc",start_fresh=False,continue_on_error=True)
+          else:
+             #nico: I did not find a simple way to check that all downloads are complete, so next step to have more chance that this is the case...
+             print('   All files are there, running a last download to complete potential unseccessful dowloads')
+             zg.download(record_or_doi=zenodo_ID,output_dir=output_dir,file_glob="*_"+experiment+"_*.nc",start_fresh=False,continue_on_error=True)
+             break
 
     return ins, mod
 
