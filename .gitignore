@@ -3,3 +3,8 @@
 *.swp
 *.swx
 *.qsub
+analysis/ferret*
+analysis/toto*
+analysis/titi*
+analysis/DATA
+analysis/__pycache__

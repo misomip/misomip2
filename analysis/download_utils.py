@@ -48,8 +48,15 @@ def download_from_zenodo(zenodo_ID,experiment,output_dir='.'):
        ins = parts[1]
        mod = parts[2]
        if not parts[3] == 'a' :
-          print('ERROR: NEED TO ADAPT THE SCRIPTS FROM MORE THAN ONE REALISATION PER MODEL AND INSTITUTE')
-          exit()
+          if ( ( parts[2] == 'MITgcm' ) & ( ( parts[3] == '67d' ) | ( parts[3] == '67s' ) ) ):
+             # correct BAS MITgcm naming error:
+             parts[2] = parts[2]+'-'+parts[3]
+             parts[3] = parts[4]
+             parts[4] = parts[5]
+             mod = parts[2]
+          else:
+             print('ERROR: NEED TO ADAPT THE SCRIPTS FROM MORE THAN ONE REALISATION PER MODEL AND INSTITUTE')
+             exit()
        if not parts[4] in ['OceanA-hind', 'OceanW-hind', 'OceanA-Pgeom', 'OceanW-Pgeom', 'OceanA-Fgeom', 'OceanW-Fgeom', 'OceanA-warm', 'OceanW-warm', \
                            'IceOceanA-hind', 'IceOceanW-hind', 'IceOceanA-ctrl', 'IceOceanW-ctrl', 'IceOceanA-warm', 'IceOceanW-warm']:
           print('ERROR: EXPERIMENT DOES NOT EXIST IN MISOMIP2')
