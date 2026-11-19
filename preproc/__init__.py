@@ -11,6 +11,7 @@ from .load_ocean_data_nemo import load_oce_mod_nemo
 from .load_ocean_data_mitgcm import load_oce_mod_mitgcm
 from .load_ocean_data_roms import load_oce_mod_roms
 from .load_ocean_data_roms_rho import load_oce_mod_roms_rho
+from .load_ocean_data_mom6 import load_oce_mod_mom6
 
 from .interp_functions import horizontal_interp
 from .interp_functions import vertical_interp

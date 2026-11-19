@@ -335,6 +335,8 @@ def rename_dimensions(ds):
      ds=ds.rename({'depthv':'z'})
    if ( "Z" in ds.dims ):
      ds=ds.rename({'Z':'z'})
+   if ( "z_l" in ds.dims ):
+     ds=ds.rename({'z_l':'z'})
 
    if ( "x_grid_T" in ds.dims ):
      ds=ds.rename({'x_grid_T':'x'})
@@ -346,6 +348,14 @@ def rename_dimensions(ds):
      ds=ds.rename({'XC':'x'})
    if ( "XG" in ds.dims ):
      ds=ds.rename({'XG':'x'})
+   if ( "xh" in ds.dims ):
+     ds=ds.rename({'xh':'x'})
+   if ( "xq" in ds.dims ):
+     ds=ds.rename({'xq':'x'})
+   if ( "xT" in ds.dims ):
+     ds=ds.rename({'xT':'x'})
+   if ( "ni" in ds.dims ):
+     ds=ds.rename({'ni':'x'})
 
    if ( "y_grid_T" in ds.dims ):
      ds=ds.rename({'y_grid_T':'y'})
@@ -357,5 +367,13 @@ def rename_dimensions(ds):
      ds=ds.rename({'YC':'y'}) 
    if ( "YG" in ds.dims ):
      ds=ds.rename({'YG':'y'})
+   if ( "yh" in ds.dims ):
+     ds=ds.rename({'yh':'y'})
+   if ( "yq" in ds.dims ):
+     ds=ds.rename({'yq':'y'})
+   if ( "yT" in ds.dims ):
+     ds=ds.rename({'yT':'y'})
+   if ( "nj" in ds.dims ):
+     ds=ds.rename({'nj':'y'})
 
    return ds
